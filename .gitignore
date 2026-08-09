@@ -1,0 +1,53 @@
+# 개발용 작업 문서 — 로컬에만 둔다 (기획/설계 원본)
+PRODUCT.md
+TECH.md
+
+# 비밀정보 — 절대 커밋 금지
+.env
+.env.*
+!.env.example
+
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# 로컬 DB 볼륨 / 업로드
+uploads/
+*.local
+
+# 로그
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 테스트/커버리지
+coverage/
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OMC / 에이전트 작업 디렉터리
+.omc/
+skills-lock.json
+
+# 에이전트 스킬 로컬 사본 (전역 ~/.claude/skills 와 중복)
+.agents/
+
+# 개인 설정 / 로컬 스킬 심볼릭 링크
+.claude/
+
+# TS 증분 빌드 캐시
+*.tsbuildinfo

@@ -1,0 +1,176 @@
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+
+# 한다리 (Handari)
+
+한 다리 건너 아는 사람을, 아는 사람이 보증해서 소개하는 서비스. 사이드 프로젝트다.
+
+**작업 전에 읽을 것**
+
+- `README.md` — 서비스 개요, 구조, 데이터 모델, 인프라. 리포에 커밋돼 있다
+- `PRODUCT.md` — 제품 명세. 동작이 번호 매긴 불변식으로 적혀 있다. 코드 주석의 `(PRODUCT 27)` 같은 표기는 이 번호를 가리킨다
+- `TECH.md` — 데이터 모델, 인프라, 다리 수 알고리즘의 상세
+
+**`PRODUCT.md`와 `TECH.md`는 gitignore돼 있다.** 작성자 로컬에만 있는 작업 문서다. 파일이 없는 환경이라면 찾아 헤매지 말고 `README.md`와 아래 "깨뜨리면 안 되는 것"을 근거로 삼는다. 그 둘로 판단이 안 서는 동작은 임의로 만들지 말고 물어본다.
+
+파일이 있는 환경에서 기능을 만들 때는 **`PRODUCT.md`의 해당 항목을 먼저 찾아 읽는다.** 명세에 없는 동작을 임의로 만들지 말고, 필요하면 `PRODUCT.md`를 먼저 고친다.
+
+## 명령
+
+```shell
+npm run tunnel      # RDS는 VPC 내부 전용. 개발 시작 = 터널 켜기 (필수, 별도 터미널)
+npm run dev         # http://localhost:3000
+npm run typecheck   # tsc --noEmit
+npm run lint
+npm run build
+
+npm run migrate         # migrations/*.sql 중 미적용분 적용
+npm run migrate:status  # 적용 현황
+
+npm run seed            # 테스트 방/사람/카드 생성 + 모든 페이지 쿼리를 실제로 검증
+npm run seed:clean      # 시드 데이터만 삭제
+```
+
+`npm run seed`는 생 SQL의 문법·컬럼 오류를 잡는 유일한 방어다. **쿼리를 고쳤으면 돌려볼 것.**
+
+**터널이 없으면 앱이 DB를 못 붙는다.** 로컬 DB는 두지 않는다 — RDS의 `handari` 데이터베이스를 개발에도 그대로 쓴다.
+
+## 구조
+
+```
+app/            화면과 라우트 (App Router)
+  api/          Route Handler (health, cron, auth)
+lib/
+  db.ts         mysql2 풀 + query/queryOne/execute/transaction
+  types.ts      테이블 행 타입. 스키마의 유일한 TS 출처
+  session.ts    getCurrentUser / requireUser — 로그인 사용자 접근의 유일한 경로
+  graph.ts      다리 수 BFS
+  photos.ts     사진 저장 (로컬 파일 / S3)
+  notify.ts     알림
+  tokens.ts     링크 토큰·만료
+  rooms.ts      방 접근·열람 게이트
+components/     AppBar, ProfileCard, ShareLink
+auth.ts         Auth.js 설정 (카카오 전용)
+proxy.ts        CloudFront 오리진 검증
+migrations/     SQL 파일. 손으로 쓰고 npm run migrate 로 적용
+infra/          EC2에 두는 배포·삭제 파일 (compose, deploy, teardown)
+scripts/        개발용 스크립트
+```
+
+## 규칙
+
+**ORM을 쓰지 않는다.** `lib/db.ts`의 헬퍼로 SQL을 직접 쓴다.
+
+```ts
+const rows = await query<ProfileRow>('SELECT * FROM profile WHERE room_id = ?', [roomId]);
+```
+
+- 값은 **반드시 `?` 바인딩**으로 넘긴다. 문자열 결합으로 SQL을 만들지 않는다
+- 행 타입은 `lib/types.ts`에 있는 것을 쓴다. 인라인으로 새로 정의하지 않는다
+- **`migrations/*.sql`을 고치면 `lib/types.ts`도 같이 고친다.** 두 곳이 어긋나도 컴파일러가 잡아주지 않는다. 이게 유일한 방어다
+
+**로그인 사용자는 `lib/session.ts`로만 가져온다.**
+
+```ts
+const user = await requireUser();       // 로그인+온보딩 필수. 아니면 리다이렉트
+const user = await getCurrentUser();    // 없으면 null
+```
+
+`auth()`를 직접 부르지 않는다. 세션(JWT)에는 `uid`만 있고 나머지는 DB에서 읽는다 — JWT는 로그인 시점에 굳어서 온보딩 같은 변경이 반영되지 않기 때문이다.
+
+**기본은 서버 컴포넌트다.** 폼은 Server Action으로 처리한다. `'use client'`는 정말 필요할 때만 쓴다 — 이 앱은 실시간 기능이 없어서 대부분 필요 없다.
+
+**시각은 UTC로 저장한다.** `lib/db.ts`가 세션 타임존을 `+00:00`으로 맞춘다. SQL에서 `NOW()` 대신 `UTC_TIMESTAMP()`를 쓴다. 표시할 때만 KST로 바꾼다.
+
+**Next 16 주의**
+
+- `cookies()`, `headers()`, `params`, `searchParams`는 전부 **async**다. 반드시 `await`
+- `middleware.ts`는 **`proxy.ts`**로 이름이 바뀌었다
+
+## 디자인 시스템
+
+화면을 만들 때 **`components/ui`에서 먼저 찾는다.** 없으면 거기에 추가한다.
+페이지에 유틸리티 클래스를 직접 뿌리지 않는다 — 화면이 늘 때마다 톤이 흩어진다.
+
+```tsx
+import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
+         Card, Box, PageTitle, SectionTitle, Caption, Badge, ListRow,
+         EmptyState, Notice, Bell, ChevronLeft } from '@/components/ui';
+```
+
+**색은 `app/globals.css`의 토큰만 쓴다.** 임의의 hex나 Tailwind 기본 팔레트(`neutral-*`, `red-*`)를 쓰지 않는다.
+
+| 토큰 | 쓰는 곳 |
+|---|---|
+| `ink` / `ink-2` / `ink-3` | 텍스트 3단. 이 이상 쪼개지 않는다 |
+| `fill` / `fill-2` | 회색 묶음. 테두리 대신 이걸로 구분한다 |
+| `haze` | 구분선 |
+| `brand` (주홍 `#FD4E43`) | **액션에만** — 버튼, 선택 상태, 안 읽은 점. 정보 표시에 쓰지 않는다 |
+| `alert` / `warn` / `good` | 상태. soft 변형과 짝으로 |
+
+**규칙**
+
+- 화면당 primary 버튼은 하나만 둔다
+- 알림은 **항상 종 아이콘**(`<Bell/>`). "알림" 텍스트로 노출하지 않는다
+- 아이콘은 24×24 그리드, stroke 1.6, `currentColor` (`components/ui/icons.tsx`)
+- 한글 문단에는 `kr` 클래스를 붙인다 (단어 중간 줄바꿈 방지)
+- 숫자에는 `mark` 클래스 (tabular-nums)
+- 기본은 서버 컴포넌트. 폼은 Server Action
+
+**브랜드 자산**
+
+로고와 파비콘은 리포에 둔다. S3는 사용자가 올린 사진 전용이다.
+
+| 파일 | 용도 |
+|---|---|
+| `app/icon.png` | 파비콘. Next.js가 자동으로 주입한다 |
+| `app/apple-icon.png` | iOS 홈화면 |
+| `public/brand/logo.png` | 앱 내 워드마크 (`components/Logo.tsx`) |
+| `brand/logo-source.png` | 마스터. 아이콘 재생성용, 배포 이미지에는 안 들어간다 |
+
+## 깨뜨리면 안 되는 것
+
+`PRODUCT.md`에 근거가 있는 것들이다. 고치기 전에 명세를 먼저 확인한다.
+
+1. **초대 링크와 카드 가져가기 링크는 1회성 + 24시간이다** (PRODUCT 7, 24). 만료 판정은 배치가 아니라 **조회 시점에** `expires_at`으로 한다
+2. **링크 사용 처리는 트랜잭션 + 영향 행 수 1 검사로 한다.** 같은 링크로 두 명이 동시에 들어오는 경쟁을 막아야 한다
+3. **`subject_user_id IS NULL` == 본인 미확인.** 별도 플래그를 만들지 않는다. 카드에 "본인 미확인" 배지가 붙는다 (PRODUCT 19)
+4. **열람 게이트** — `room_member.unlocked_at`이 NULL이면 남의 카드가 안 보인다. 등록하면 열리고, 한 번 열리면 다시 잠기지 않는다 (PRODUCT 9~11)
+5. **품절은 본인 선택이 주선자 선택보다 우선한다** (PRODUCT 51). 본인이 되돌린 카드를 주선자가 다시 내릴 수 없다
+6. **거절 사유는 전달하지 않는다** (PRODUCT 23, 38). 지인 관계가 걸려 있다
+7. **`UNWANTED`/`NOT_SELF` 신고는 접수 즉시 `HIDDEN`으로 바꾼다** (PRODUCT 59). 운영자를 기다리지 않는다
+8. **`profile.status`의 `DRAFT`/`INVITED`는 MVP에서 쓰지 않는다.** 승인 게이트를 켤 때를 위해 enum에만 있다. 지우지 말 것
+
+## 승인 게이트 (아직 없음)
+
+MVP에는 본인 승인 대기가 없다. 등록하면 바로 공개된다. 나중에 켤 때 필요한 건 이것뿐이다 — 마이그레이션 없음.
+
+1. 등록 시 시작 상태를 `ACTIVE` → `DRAFT`로
+2. 조회 계층에 "`DRAFT`/`INVITED`는 `author_user_id` 본인에게만" 스코프 추가
+3. 가져가기 링크 화면에 승인/거절 버튼 추가
+
+## 인프라
+
+tium 프로젝트(Java/Spring)와 **EC2 호스트·RDS 인스턴스만** 공유한다. 그 외에는 전부 분리돼 있다.
+
+**tium 자원은 절대 건드리지 않는다.** 언제든 지워도 tium에 흔적이 남지 않아야 한다. 이 원칙 때문에 이렇게 돼 있다:
+
+- DB는 `handari` 데이터베이스 + 전용 계정. `tium` DB가 보이지 않는다
+- Docker 네트워크는 `handari-network`. `tium-network`에 붙지 않는다
+- tium의 nginx를 거치지 않는다. CloudFront가 EC2:3000으로 직접 온다 (`proxy.ts`가 오리진 검증)
+- S3는 전용 버킷 `handari-uploads`. tium 버킷과 크레덴셜을 쓰지 않는다
+
+기타
+
+- 시크릿은 SSM `/handari/prod/*`. 로컬은 `.env.local` (커밋 금지)
+- 배포는 **master** push → GitHub Actions → Docker Hub → EC2. 블루/그린 없음
+- 도메인 `handari.tium-care.com`
+- 삭제: `ssh tium` 후 `/home/ubuntu/infra/teardown-handari.sh --yes`
+- 자세한 건 `README.md`, 더 상세한 건 `TECH.md`(로컬 전용)

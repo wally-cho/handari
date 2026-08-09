@@ -1,0 +1,51 @@
+# EC2의 /home/ubuntu/infra/ 에 둔다.
+#
+# tium과 완전히 분리한다. 지우면 흔적이 남지 않아야 한다.
+#   - 별도 네트워크(handari-network). tium-network에 합류하지 않는다
+#     → handari 컨테이너는 tium-redis / tium-server에 접근할 수 없다
+#   - tium의 nginx를 거치지 않는다. CloudFront가 이 포트로 직접 온다
+#     → tium nginx 설정을 건드리지 않으므로 reload 사고로 tium API가 죽을 일이 없다
+#   - 블루/그린 없음. 취미 프로젝트에 무중단 배포는 과하다
+#
+# 삭제: infra/TEARDOWN.md
+
+services:
+  handari:
+    container_name: handari
+    image: ${DOCKER_IMAGE}
+    env_file:
+      - ./handari.env # deploy-handari.sh 가 SSM에서 받아 만든다. 커밋 대상 아님
+    environment:
+      - NODE_ENV=production
+      - TZ=Asia/Seoul
+    ports:
+      # CloudFront가 직접 붙는다. 보안그룹에서 CloudFront 관리형 prefix list만 허용할 것
+      # (com.amazonaws.global.cloudfront.origin-facing). TEARDOWN.md / SETUP 참조
+      - '3000:3000'
+    networks:
+      - handari-network
+    restart: always
+    # EC2 메모리가 3.7GB고 tium 서버(Xmx 768m)가 이미 올라가 있다.
+    # 상한을 둬서 handari가 tium을 밀어내지 못하게 한다
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://127.0.0.1:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  handari-network:
+    name: handari-network
