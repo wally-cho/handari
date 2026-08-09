@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { queryOne } from '@/lib/db';
-import { Bell, ChevronLeft } from '@/components/ui';
+import { Bell } from '@/components/ui';
+import BackButton from '@/components/BackButton';
 
 // 상단 바. 알림은 항상 종 아이콘이고 텍스트로 쓰지 않는다.
 // 안 읽은 게 있으면 빨간 점이 붙는다 (PRODUCT 55). 실시간이 아니라 화면을 새로 그릴 때 갱신된다.
@@ -41,11 +42,8 @@ export default function AppBar({
 }) {
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-1 bg-white/90 px-4 backdrop-blur-md">
-      {back && (
-        <Link href={back} aria-label="뒤로" className="text-ink -ml-2 p-2">
-          <ChevronLeft size={24} />
-        </Link>
-      )}
+      {/* 히스토리로 돌아간다. back은 링크로 바로 들어왔을 때의 fallback이다 */}
+      {back && <BackButton fallback={back} />}
       <h1 className="flex-1 truncate text-[17px] font-bold tracking-[-0.03em]">{title}</h1>
       {action}
       {userId != null && <NotificationBell userId={userId} />}

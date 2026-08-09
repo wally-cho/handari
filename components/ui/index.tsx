@@ -277,6 +277,34 @@ export function ListRow({
   );
 }
 
+/**
+ * 목록 필터 탭. 링크로 동작해서 서버에서 필터링한다 —
+ * 클라이언트 상태를 만들 이유가 없고, 뒤로가기도 자연스럽다.
+ */
+export function Tabs({
+  items,
+}: {
+  items: readonly { href: string; label: string; count?: number; active: boolean }[];
+}) {
+  return (
+    <nav className="bg-fill flex gap-1 rounded-[14px] p-1">
+      {items.map((t) => (
+        <Link
+          key={t.href}
+          href={t.href}
+          scroll={false}
+          className={`flex-1 rounded-[11px] py-2 text-center text-[14px] font-semibold transition-colors ${
+            t.active ? 'text-ink bg-white shadow-sm' : 'text-ink-3'
+          }`}
+        >
+          {t.label}
+          {t.count != null && <span className="mark ml-1 font-bold">{t.count}</span>}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 export function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className="text-ink-3 kr py-12 text-center text-[14px]">{children}</p>;
 }

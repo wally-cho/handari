@@ -5,7 +5,7 @@ import { requireRoomAccess } from '@/lib/rooms';
 import { distancesFrom, degreeToProfile } from '@/lib/graph';
 import AppBar from '@/components/AppBar';
 import ProfileCard, { type CardData } from '@/components/ProfileCard';
-import { Box, ButtonLink, Caption, EmptyState } from '@/components/ui';
+import { Box, ButtonLink, Caption, EmptyState, Tabs } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
 // 방 홈 = 카드 목록.
@@ -16,8 +16,18 @@ import type { ProfileRow } from '@/lib/types';
 //
 // 열람 게이트를 통과하지 못했으면 카드 대신 등록 유도 화면을 보여준다 (PRODUCT 9~12).
 
-export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
+type GenderFilter = 'ALL' | 'MALE' | 'FEMALE';
+
+export default async function RoomPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ g?: string }>;
+}) {
   const { id } = await params;
+  const { g } = await searchParams;
+  const filter: GenderFilter = g === 'MALE' || g === 'FEMALE' ? g : 'ALL';
   const roomId = Number(id);
   const user = await requireUser(`/rooms/${id}`);
   const { room, unlocked, isOwner } = await requireRoomAccess(roomId, user.id);
@@ -57,7 +67,8 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
             </p>
           </Box>
 
-          <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <Caption className="mt-4 mb-2 text-center">참여자 {stats?.members ?? 0}명</Caption>
+          <dl className="grid grid-cols-3 gap-2 text-center">
             {[
               ['카드', (stats?.male ?? 0) + (stats?.female ?? 0)],
               ['남성', stats?.male ?? 0],
@@ -69,7 +80,6 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
               </div>
             ))}
           </dl>
-          <Caption className="mt-2 text-center">참여자 {stats?.members ?? 0}명</Caption>
 
           <div className="mt-7 space-y-2.5">
             <ButtonLink href={`/rooms/${roomId}/register`}>등록하기</ButtonLink>
@@ -97,34 +107,52 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
     .map((p) => ({ ...p, degree: degreeToProfile(dist, p) }))
     .sort((a, b) => a.degree - b.degree);
 
+  // 탭 카운트는 전체 기준으로 세야 하므로 필터링은 표시 직전에 한다
+  const visible = filter === 'ALL' ? cards : cards.filter((c) => c.gender === filter);
+
   return (
     <>
       <AppBar title={room.name} back="/" userId={user.id} action={manageLink} />
 
-      <main className="px-6 pt-2 pb-32">
-        <div className="flex gap-2">
-          {[
-            ['카드', (stats?.male ?? 0) + (stats?.female ?? 0)],
-            ['남성', stats?.male ?? 0],
-            ['여성', stats?.female ?? 0],
-          ].map(([label, value]) => (
-            <div key={label} className="bg-fill-2 flex-1 rounded-2xl py-3 text-center">
-              <div className="text-ink-3 text-[12px] font-medium">{label}</div>
-              <div className="mark mt-0.5 text-[18px] font-bold">{value}</div>
-            </div>
-          ))}
-        </div>
-        <Caption className="mt-2 mb-6 text-center">참여자 {stats?.members ?? 0}명</Caption>
+      <main className="px-6 pt-1 pb-32">
+        <Caption className="mb-3">참여자 {stats?.members ?? 0}명</Caption>
 
         <ButtonLink href={`/rooms/${roomId}/invite`} tone="ghost" small className="!w-full">
           초대 링크 만들기
         </ButtonLink>
 
-        {cards.length === 0 ? (
-          <EmptyState>아직 등록된 카드가 없어요.</EmptyState>
+        <div className="mt-6">
+          <Tabs
+            items={[
+              {
+                href: `/rooms/${roomId}`,
+                label: '전체',
+                count: cards.length,
+                active: filter === 'ALL',
+              },
+              {
+                href: `/rooms/${roomId}?g=MALE`,
+                label: '남성',
+                count: cards.filter((c) => c.gender === 'MALE').length,
+                active: filter === 'MALE',
+              },
+              {
+                href: `/rooms/${roomId}?g=FEMALE`,
+                label: '여성',
+                count: cards.filter((c) => c.gender === 'FEMALE').length,
+                active: filter === 'FEMALE',
+              },
+            ]}
+          />
+        </div>
+
+        {visible.length === 0 ? (
+          <EmptyState>
+            {cards.length === 0 ? '아직 등록된 카드가 없어요.' : '이 조건에 맞는 카드가 없어요.'}
+          </EmptyState>
         ) : (
-          <ul className="mt-7 space-y-2.5">
-            {cards.map((card, i) => (
+          <ul className="mt-5 space-y-2.5">
+            {visible.map((card, i) => (
               <li
                 key={card.id}
                 className="rise"

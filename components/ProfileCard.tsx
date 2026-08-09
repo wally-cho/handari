@@ -42,7 +42,7 @@ export default function ProfileCard({ card }: { card: CardData }) {
           </div>
 
           <p className="text-ink-3 mark mt-0.5 text-[13px]">
-            {age}세 · {card.region}
+            {age}세 · {card.gender === 'MALE' ? '남성' : '여성'} · {card.region}
             {card.job && ` · ${card.job}`}
           </p>
 
