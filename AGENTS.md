@@ -125,7 +125,9 @@ import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
 - 알림은 **항상 종 아이콘**(`<Bell/>`). "알림" 텍스트로 노출하지 않는다
 - 뒤로가기는 **히스토리로 돌아간다**(`<BackButton/>`). `AppBar`의 `back`은 링크로 바로
   들어왔을 때의 fallback일 뿐이다. 고정 경로로 두면 방 → 알림 → 뒤로 가 홈으로 튄다
-- 목록 필터는 `<Tabs/>`로 링크 이동해서 서버에서 거른다. 클라이언트 상태를 만들지 않는다
+- 목록 필터는 `<Tabs/>`로 링크 이동해서 서버에서 거른다. 클라이언트 상태를 만들지 않는다.
+  **탭 이동은 `replace`다** — 같은 화면의 상태 변경이라 히스토리에 쌓이면 뒤로가기가
+  필터를 거슬러 올라간다
 - 아이콘은 24×24 그리드, stroke 1.6, `currentColor` (`components/ui/icons.tsx`)
 - 한글 문단에는 `kr` 클래스를 붙인다 (단어 중간 줄바꿈 방지)
 - 숫자에는 `mark` 클래스 (tabular-nums)

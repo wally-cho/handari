@@ -278,8 +278,11 @@ export function ListRow({
 }
 
 /**
- * 목록 필터 탭. 링크로 동작해서 서버에서 필터링한다 —
- * 클라이언트 상태를 만들 이유가 없고, 뒤로가기도 자연스럽다.
+ * 목록 필터 탭. 링크로 동작해서 서버에서 필터링한다 — 클라이언트 상태를 만들 이유가 없다.
+ *
+ * replace로 이동한다. 탭 전환은 같은 화면의 상태 변경이지 다른 화면으로 가는 게 아니다.
+ * push하면 전체→남성→여성을 누른 뒤 뒤로가기가 필터를 거슬러 올라가고,
+ * 방을 벗어나려면 누른 횟수만큼 눌러야 한다.
  */
 export function Tabs({
   items,
@@ -292,6 +295,7 @@ export function Tabs({
         <Link
           key={t.href}
           href={t.href}
+          replace
           scroll={false}
           className={`flex-1 rounded-[11px] py-2 text-center text-[14px] font-semibold transition-colors ${
             t.active ? 'text-ink bg-white shadow-sm' : 'text-ink-3'
