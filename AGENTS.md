@@ -139,6 +139,48 @@ import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
 | `public/brand/logo.png` | 앱 내 워드마크 (`components/Logo.tsx`) |
 | `brand/logo-source.png` | 마스터. 아이콘 재생성용, 배포 이미지에는 안 들어간다 |
 
+## 배포에서 밟은 지뢰
+
+전부 로컬에서는 안 나고 CI·운영에서만 나는 것들이다. 같은 자리를 다시 밟지 않도록 적어둔다.
+
+**푸시하기 전에 Docker로 빌드해본다.** CI를 디버거로 쓰면 한 번에 3분씩 태운다.
+
+```shell
+docker build -t handari:verify .
+docker run --rm -p 3100:3000 \
+  -e DATABASE_URL=... -e AUTH_SECRET=... -e ORIGIN_VERIFY_SECRET=아무값 \
+  handari:verify
+```
+
+`ORIGIN_VERIFY_SECRET`을 **반드시 넣고** 띄운다. 로컬 dev에는 이 값이 없어서 `proxy.ts`가
+no-op이고, 그래서 오리진 검증과 얽힌 버그는 로컬에서 절대 재현되지 않는다.
+
+**lockfile은 리눅스에서 만든다.** macOS의 `npm install`은 `@img/sharp-wasm32`가 요구하는
+`@emnapi/runtime`을 lock에 넣지 않는다. 리눅스의 `npm ci`가 거부한다.
+
+```shell
+docker run --rm -v "$PWD":/w -w /w node:22-alpine npm install --package-lock-only
+```
+
+**빌드 시점에 DB에 붙지 않는다.** 커넥션 풀은 `getPool()`로 첫 쿼리 때 만든다. 모듈 로드
+시점에 만들면 `next build`가 라우트 설정을 수집하며 파일을 평가할 때 `DATABASE_URL`이 없어
+빌드가 깨진다 — CI와 Docker 빌드에는 그 값이 없다.
+
+**`proxy.ts`의 matcher에서 정적 자산을 뺀다.** 이미지 최적화기가 `public/` 파일을 자기
+자신에게 다시 요청하는데 그 내부 요청에는 `x-origin-verify` 헤더가 없다. 막으면 이미지가
+400으로 깨진다.
+
+**compose의 `handari-network`는 `external: true`다.** `deploy-handari.sh`가 먼저 만들기
+때문에, compose가 소유권을 주장하면 "incorrect label"로 배포가 막힌다.
+
+**AWS 작업은 EC2 인스턴스 역할로 한다.** `tium` IAM 사용자 키에는 ACM·Route 53 권한이 없다
+(`implicitDeny`). 인스턴스 역할 `tium-ec2`에는 다 있다.
+
+```shell
+ssh tium
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 한다
+```
+
 ## 깨뜨리면 안 되는 것
 
 `PRODUCT.md`에 근거가 있는 것들이다. 고치기 전에 명세를 먼저 확인한다.
@@ -150,7 +192,13 @@ import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
 5. **품절은 본인 선택이 주선자 선택보다 우선한다** (PRODUCT 51). 본인이 되돌린 카드를 주선자가 다시 내릴 수 없다
 6. **거절 사유는 전달하지 않는다** (PRODUCT 23, 38). 지인 관계가 걸려 있다
 7. **`UNWANTED`/`NOT_SELF` 신고는 접수 즉시 `HIDDEN`으로 바꾼다** (PRODUCT 59). 운영자를 기다리지 않는다
-8. **`profile.status`의 `DRAFT`/`INVITED`는 MVP에서 쓰지 않는다.** 승인 게이트를 켤 때를 위해 enum에만 있다. 지우지 말 것
+8. **초대자와 주선자는 다른 개념이다.** 초대자는 `room_member.invited_by_user_id`(방에
+   데려온 사람), 주선자는 `profile.author_user_id`(카드를 쓴 사람). 자주 겹치지만 같지 않고,
+   **다리 수는 두 관계를 모두 센다** (`lib/graph.ts`)
+9. **관심을 거두면 받았던 쪽에도 알린다.** 주선자와 후보자 양쪽이 관심 알림을 받았으므로,
+   취소도 양쪽에 가야 사라진 요청을 기다리지 않는다. `CANCELED`와 `EXPIRED`를 뭉뚱그리지
+   않는다 — 받는 쪽에 다른 사건이다
+10. **`profile.status`의 `DRAFT`/`INVITED`는 MVP에서 쓰지 않는다.** 승인 게이트를 켤 때를 위해 enum에만 있다. 지우지 말 것
 
 ## 승인 게이트 (아직 없음)
 
