@@ -87,7 +87,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
       }
     });
 
-    await notify(authorId, 'CARD_CLAIMED', { profileId: profile!.id });
+    await notify(authorId, 'CARD_CLAIMED', { profileId: profile!.id, nickname: me.nickname });
     redirect(`/profiles/${profile!.id}?claimed=1`);
   }
 

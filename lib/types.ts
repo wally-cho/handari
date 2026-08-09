@@ -16,7 +16,13 @@ export type ConsentType = 'SELF' | 'OFFLINE_CONFIRMED' | 'APPROVED_IN_APP';
 export type PausedBy = 'SELF' | 'MATCHMAKER';
 export type MemberRole = 'OWNER' | 'MEMBER';
 export type MemberStatus = 'ACTIVE' | 'KICKED';
-export type InterestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CONNECTED';
+export type InterestStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'DECLINED'
+  | 'EXPIRED' // 7일 무응답
+  | 'CANCELED' // 보낸 사람이 거둠
+  | 'CONNECTED';
 export type ConnectionStatus = 'PENDING' | 'DONE';
 export type ReportReason = 'FALSE_INFO' | 'NOT_SELF' | 'UNWANTED' | 'OFFENSIVE' | 'ETC';
 export type ReportStatus = 'OPEN' | 'RESOLVED';
@@ -120,9 +126,11 @@ export interface ConnectionRow {
 }
 
 export type NotificationType =
+  | 'INVITE_ACCEPTED' // 내 초대 링크로 들어왔어요
   | 'CARD_CLAIMED' // 친구분이 카드를 가져갔어요
   | 'CARD_DROPPED' // 친구분이 카드를 내렸어요
   | 'INTEREST_RECEIVED' // 관심이 왔어요
+  | 'INTEREST_CANCELED' // 보낸 사람이 관심을 거뒀어요
   | 'INTEREST_UNCLAIMED' // 친구분이 아직 카드를 안 가져갔어요
   | 'MATCHMAKER_COMMENT' // 주선자가 한마디 남겼어요
   | 'INTEREST_ACCEPTED'

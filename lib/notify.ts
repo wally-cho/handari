@@ -16,18 +16,27 @@ export async function notify(
   ]);
 }
 
-/** 알림 문구. 알림함과 배지에서 같은 문구를 쓴다 */
-export function notificationText(type: NotificationType): {
-  title: string;
-  href?: string;
-} {
+/**
+ * 알림 문구. 알림함과 배지에서 같은 문구를 쓴다.
+ * payload에 이름이 있으면 넣는다 — "누가"가 빠지면 열어봐야만 알 수 있다.
+ */
+export function notificationText(
+  type: NotificationType,
+  payload?: Record<string, unknown> | null,
+): { title: string } {
+  const who = typeof payload?.nickname === 'string' ? payload.nickname : null;
+
   switch (type) {
+    case 'INVITE_ACCEPTED':
+      return { title: who ? `${who}님이 초대를 받고 들어왔어요` : '초대한 친구가 들어왔어요' };
     case 'CARD_CLAIMED':
-      return { title: '친구분이 카드를 가져갔어요' };
+      return { title: who ? `${who}님이 카드를 가져갔어요` : '친구분이 카드를 가져갔어요' };
     case 'CARD_DROPPED':
       return { title: '친구분이 카드를 내렸어요' };
     case 'INTEREST_RECEIVED':
-      return { title: '관심이 왔어요' };
+      return { title: who ? `${who}님이 관심을 표시했어요` : '관심이 왔어요' };
+    case 'INTEREST_CANCELED':
+      return { title: who ? `${who}님이 관심을 거뒀어요` : '관심 표시가 취소됐어요' };
     case 'INTEREST_UNCLAIMED':
       return { title: '친구분이 아직 카드를 안 가져갔어요. 링크를 보내주세요' };
     case 'MATCHMAKER_COMMENT':

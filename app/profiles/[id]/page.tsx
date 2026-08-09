@@ -23,12 +23,17 @@ export default async function ProfileDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ claimed?: string; sent?: string; error?: string }>;
+  searchParams: Promise<{
+    claimed?: string;
+    sent?: string;
+    canceled?: string;
+    error?: string;
+  }>;
 }) {
   const { id } = await params;
   const profileId = Number(id);
   const user = await requireUser(`/profiles/${id}`);
-  const { claimed, sent, error } = await searchParams;
+  const { claimed, sent, canceled, error } = await searchParams;
 
   const profile = await queryOne<DetailView>(
     `SELECT p.*, u.nickname AS author_nickname, r.name AS room_name
@@ -85,7 +90,12 @@ export default async function ProfileDetailPage({
 
     // 주선자와 본인 양쪽에 동시에 간다 (PRODUCT 34).
     // 주선자가 안 봐도 흐름이 멈추지 않게 하려는 것이다
-    const payload = { interestId: res.insertId, profileId, fromUserId: me.id };
+    const payload = {
+      interestId: res.insertId,
+      profileId,
+      fromUserId: me.id,
+      nickname: me.nickname,
+    };
     await notify(p.author_user_id, 'INTEREST_RECEIVED', payload);
 
     if (p.subject_user_id) {
@@ -96,6 +106,35 @@ export default async function ProfileDetailPage({
     }
 
     redirect(`/profiles/${profileId}?sent=1`);
+  }
+
+  /** 보낸 사람이 관심을 거둔다. 상대가 답하기 전까지만 */
+  async function cancelInterest() {
+    'use server';
+
+    const me = await requireUser();
+    const it = await queryOne<{ id: number; author: number; subject: number | null }>(
+      `SELECT i.id, p.author_user_id AS author, p.subject_user_id AS subject
+         FROM interest i JOIN profile p ON p.id = i.to_profile_id
+        WHERE i.from_user_id = ? AND i.to_profile_id = ? AND i.status = 'PENDING'`,
+      [me.id, profileId],
+    );
+    if (!it) redirect(`/profiles/${profileId}`);
+
+    await execute(
+      "UPDATE interest SET status='CANCELED', responded_at=UTC_TIMESTAMP() WHERE id = ? AND status='PENDING'",
+      [it.id],
+    );
+
+    // 관심이 왔다고 알림을 받은 쪽에는 거둬졌다는 것도 알려야 한다.
+    // 안 그러면 사라진 요청을 계속 기다린다
+    const payload = { profileId, nickname: me.nickname };
+    await notify(it.author, 'INTEREST_CANCELED', payload);
+    if (it.subject && it.subject !== it.author) {
+      await notify(it.subject, 'INTEREST_CANCELED', payload);
+    }
+
+    redirect(`/profiles/${profileId}?canceled=1`);
   }
 
   async function togglePause() {
@@ -169,7 +208,7 @@ export default async function ProfileDetailPage({
       <AppBar title={profile.display_name} back={`/rooms/${profile.room_id}`} userId={user.id} />
 
       <main className="pb-16">
-        {(claimed || sent || error || profile.status === 'HIDDEN') && (
+        {(claimed || sent || canceled || error || profile.status === 'HIDDEN') && (
           <div className="px-6 pb-4">
             {claimed && (
               <Notice tone="good">내 카드가 됐어요. 이제 직접 고치거나 내릴 수 있어요.</Notice>
@@ -244,13 +283,19 @@ export default async function ProfileDetailPage({
           )}
 
           <div className="mt-8 space-y-2.5">
-            {!isMine && profile.status === 'ACTIVE' && (
-              <form action={sendInterest}>
-                <Button type="submit" disabled={Boolean(pending)}>
-                  {pending ? '답을 기다리는 중' : '관심 표시하기'}
-                </Button>
-              </form>
-            )}
+            {!isMine &&
+              profile.status === 'ACTIVE' &&
+              (pending ? (
+                <form action={cancelInterest}>
+                  <Button type="submit" tone="ghost">
+                    관심 취소하기
+                  </Button>
+                </form>
+              ) : (
+                <form action={sendInterest}>
+                  <Button type="submit">관심 표시하기</Button>
+                </form>
+              ))}
 
             {isAuthor && profile.claimed_at == null && (
               <ButtonLink href={`/profiles/${profileId}/share`} tone="ghost">

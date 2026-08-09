@@ -22,9 +22,13 @@ function timeAgo(date: Date): string {
 
 /** 알림에서 어디로 보낼지 */
 function hrefFor(n: NotificationRow): string {
-  const profileId = (n.payload ?? {}).profileId as number | undefined;
+  const payload = n.payload ?? {};
+  const profileId = payload.profileId as number | undefined;
+  const roomId = payload.roomId as number | undefined;
 
   switch (n.type) {
+    case 'INVITE_ACCEPTED':
+      return roomId ? `/rooms/${roomId}` : '/';
     case 'INTEREST_RECEIVED':
     case 'MATCHMAKER_COMMENT':
     case 'INTEREST_ACCEPTED':
@@ -80,7 +84,7 @@ export default async function NotificationsPage() {
                       <span
                         className={`kr block text-[15px] leading-snug ${unread ? 'font-semibold' : 'text-ink-2'}`}
                       >
-                        {notificationText(n.type).title}
+                        {notificationText(n.type, n.payload).title}
                       </span>
                       <span className="text-ink-3 mark mt-1 block text-[13px]">
                         {timeAgo(n.created_at)}

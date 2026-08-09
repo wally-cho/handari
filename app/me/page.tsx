@@ -2,14 +2,7 @@ import { query } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { signOut } from '@/auth';
 import AppBar from '@/components/AppBar';
-import {
-  Badge,
-  Button,
-  ButtonLink,
-  EmptyState,
-  ListRow,
-  SectionTitle,
-} from '@/components/ui';
+import { Badge, Button, ButtonLink, EmptyState, ListRow, SectionTitle } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
 // 마이페이지. 내 카드, 내가 소개한 사람, 관심 현황.

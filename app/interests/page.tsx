@@ -4,6 +4,7 @@ import { execute, query, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { notify } from '@/lib/notify';
 import AppBar from '@/components/AppBar';
+import { Button } from '@/components/ui';
 import type { InterestRow } from '@/lib/types';
 
 // 관심 요청 (PRODUCT 34~42).
@@ -29,6 +30,7 @@ const STATUS_TEXT: Record<string, string> = {
   ACCEPTED: '수락했어요',
   DECLINED: '지금은 어려울 것 같대요',
   EXPIRED: '응답이 없어 만료됐어요',
+  CANCELED: '관심을 거뒀어요',
   CONNECTED: '연결됐어요',
 };
 
@@ -98,6 +100,36 @@ export default async function InterestsPage() {
     } else {
       // 사유는 전달하지 않는다. 지인 관계가 걸려 있다 (PRODUCT 38)
       await notify(row.from_user_id, 'INTEREST_DECLINED', { interestId });
+    }
+
+    redirect('/interests');
+  }
+
+  /** 보낸 사람이 관심을 거둔다. 상대가 답하기 전까지만 */
+  async function cancel(formData: FormData) {
+    'use server';
+
+    const me = await requireUser();
+    const interestId = Number(formData.get('interest_id'));
+
+    const it = await queryOne<{ author: number; subject: number | null; profile: number }>(
+      `SELECT p.author_user_id AS author, p.subject_user_id AS subject, p.id AS profile
+         FROM interest i JOIN profile p ON p.id = i.to_profile_id
+        WHERE i.id = ? AND i.from_user_id = ? AND i.status = 'PENDING'`,
+      [interestId, me.id],
+    );
+    if (!it) redirect('/interests');
+
+    await execute(
+      "UPDATE interest SET status='CANCELED', responded_at=UTC_TIMESTAMP() WHERE id = ? AND status='PENDING'",
+      [interestId],
+    );
+
+    // 관심이 왔다고 알림을 받은 쪽에는 거둬졌다는 것도 알려야 한다
+    const payload = { profileId: it.profile, nickname: me.nickname };
+    await notify(it.author, 'INTEREST_CANCELED', payload);
+    if (it.subject && it.subject !== it.author) {
+      await notify(it.subject, 'INTEREST_CANCELED', payload);
     }
 
     redirect('/interests');
@@ -207,11 +239,23 @@ export default async function InterestsPage() {
         ) : (
           <ul className="divide-haze mt-3 divide-y">
             {sent.map((it) => (
-              <li key={it.id} className="flex items-center justify-between gap-3 py-3">
-                <Link href={`/profiles/${it.to_profile_id}`} className="truncate text-sm">
+              <li key={it.id} className="flex items-center gap-2 py-3.5">
+                <Link
+                  href={`/profiles/${it.to_profile_id}`}
+                  className="min-w-0 flex-1 truncate text-[15px] font-semibold"
+                >
                   {it.profile_name}
                 </Link>
-                <span className="text-ink-3 shrink-0 text-xs">{STATUS_TEXT[it.status]}</span>
+                {it.status === 'PENDING' ? (
+                  <form action={cancel}>
+                    <input type="hidden" name="interest_id" value={it.id} />
+                    <Button type="submit" tone="ghost" small>
+                      취소
+                    </Button>
+                  </form>
+                ) : (
+                  <span className="text-ink-3 shrink-0 text-[13px]">{STATUS_TEXT[it.status]}</span>
+                )}
               </li>
             ))}
           </ul>

@@ -3,15 +3,7 @@ import { getCurrentUser, isOnboarded } from '@/lib/session';
 import { canCreateRoom } from '@/lib/admin';
 import Logo from '@/components/Logo';
 import { NotificationBell } from '@/components/AppBar';
-import {
-  Box,
-  ButtonLink,
-  Caption,
-  Card,
-  PageTitle,
-  SectionTitle,
-  Users,
-} from '@/components/ui';
+import { Box, ButtonLink, Caption, Card, PageTitle, SectionTitle, Users } from '@/components/ui';
 import Link from 'next/link';
 import type { RoomRow } from '@/lib/types';
 

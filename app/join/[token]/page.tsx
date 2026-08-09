@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { queryOne, transaction } from '@/lib/db';
 import { getCurrentUser, isOnboarded } from '@/lib/session';
 import { isExpired } from '@/lib/tokens';
+import { notify } from '@/lib/notify';
 import type { RoomInviteRow } from '@/lib/types';
 
 // 초대 링크 진입 (PRODUCT 7).
@@ -98,6 +99,13 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
   }).catch((e: Error) => {
     if (e.message === 'LINK_TAKEN') redirect(`/join/${token}`); // 만료 화면으로 다시
     throw e;
+  });
+
+  // 초대한 사람에게 알린다. 링크를 보내놓고 들어왔는지 몰라서
+  // 계속 물어보게 되는 걸 막는다
+  await notify(invite.inviter_user_id, 'INVITE_ACCEPTED', {
+    roomId: invite.room_id,
+    nickname: user.nickname,
   });
 
   redirect(`/rooms/${invite.room_id}`);
