@@ -12,6 +12,8 @@ export type ProfileStatus =
   | 'DELETED';
 
 export type Gender = 'MALE' | 'FEMALE';
+export type DrinkType = 'NONE' | 'SOJU' | 'BEER' | 'SOMAEK';
+export type Religion = 'NONE' | 'CHRISTIAN' | 'CATHOLIC' | 'BUDDHIST' | 'ETC';
 export type ConsentType = 'SELF' | 'OFFLINE_CONFIRMED' | 'APPROVED_IN_APP';
 export type PausedBy = 'SELF' | 'MATCHMAKER';
 export type MemberRole = 'OWNER' | 'MEMBER';
@@ -87,6 +89,18 @@ export interface ProfileRow {
   birth_year: number;
   region: string;
   job: string | null;
+  /** 아래는 전부 선택. 주선자가 모르면 비워두고 본인이 가져간 뒤 채운다 */
+  hobbies: string | null;
+  mbti: string | null;
+  /** cm */
+  height: number | null;
+  drink_type: DrinkType | null;
+  /** 종류에 따라 단위가 다르다 — 소주 병, 맥주·소맥 잔 */
+  drink_amount: number | null;
+  /** mysql2가 tinyint(1)을 boolean으로 준다 */
+  smoking: boolean | null;
+  religion: Religion | null;
+  ideal_type: string | null;
   /** 주선자 추천사. 카드의 주인공 (PRODUCT 15) */
   recommendation: string | null;
   self_intro: string | null;

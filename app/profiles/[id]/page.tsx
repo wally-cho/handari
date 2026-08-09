@@ -8,6 +8,7 @@ import { photoUrl, deletePhoto } from '@/lib/photos';
 import { notify } from '@/lib/notify';
 import { daysFromNow, INTEREST_TTL_DAYS } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
+import { drinkText, religionText, smokingText } from '@/lib/profileFields';
 import { Badge, Box, Button, ButtonLink, Caption, Notice } from '@/components/ui';
 import type { ProfileRow, InterestRow } from '@/lib/types';
 
@@ -195,6 +196,19 @@ export default async function ProfileDetailPage({
     redirect(`/rooms/${p.room_id}`);
   }
 
+  // 채워진 것만 보여준다. 빈 줄이 늘어서면 카드가 설문지처럼 보인다
+  const details: [string, string][] = (
+    [
+      ['취미', profile.hobbies],
+      ['MBTI', profile.mbti],
+      ['키', profile.height ? `${profile.height}cm` : null],
+      ['주량', drinkText(profile.drink_type, profile.drink_amount)],
+      ['담배', smokingText(profile.smoking)],
+      ['종교', religionText(profile.religion)],
+      ['이런 사람이면', profile.ideal_type],
+    ] as [string, string | null][]
+  ).filter((d): d is [string, string] => Boolean(d[1]));
+
   const photo = photoUrl(profile.photo_key);
   const age = new Date().getFullYear() - profile.birth_year + 1;
   const paused = profile.status === 'PAUSED';
@@ -261,6 +275,17 @@ export default async function ProfileDetailPage({
               </p>
               <p className="text-ink-3 mt-3 text-[13px]">— {profile.author_nickname}님이 쓴 소개</p>
             </Box>
+          )}
+
+          {details.length > 0 && (
+            <dl className="divide-haze ring-haze mt-3 divide-y rounded-2xl px-[18px] ring-1">
+              {details.map(([label, value]) => (
+                <div key={label} className="flex gap-4 py-3">
+                  <dt className="text-ink-3 w-20 shrink-0 text-[14px]">{label}</dt>
+                  <dd className="kr flex-1 text-[15px] whitespace-pre-wrap">{value}</dd>
+                </div>
+              ))}
+            </dl>
           )}
 
           {profile.self_intro && (

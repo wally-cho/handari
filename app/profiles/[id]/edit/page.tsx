@@ -4,32 +4,14 @@ import { requireUser } from '@/lib/session';
 import { requireRoomAccess } from '@/lib/rooms';
 import { savePhoto, deletePhoto, photoUrl, PhotoError } from '@/lib/photos';
 import AppBar from '@/components/AppBar';
+import ProfileExtraFields from '@/components/ProfileExtraFields';
+import { REGIONS, parseExtras } from '@/lib/profileFields';
 import type { ProfileRow } from '@/lib/types';
 
 // 카드 고치기.
 //
 // 추천사는 주선자의 말이므로 본인이 고칠 수 없다 (PRODUCT 22).
 // 주선자는 본인이 가져가기 전까지만 고칠 수 있다.
-
-const REGIONS = [
-  '서울',
-  '경기',
-  '인천',
-  '부산',
-  '대구',
-  '대전',
-  '광주',
-  '울산',
-  '세종',
-  '강원',
-  '충북',
-  '충남',
-  '전북',
-  '전남',
-  '경북',
-  '경남',
-  '제주',
-];
 
 export default async function EditProfilePage({
   params,
@@ -81,6 +63,7 @@ export default async function EditProfilePage({
     const recommendation = String(formData.get('recommendation') ?? '').trim();
     const removePhoto = formData.get('remove_photo') === 'on';
     const photo = formData.get('photo');
+    const extras = parseExtras(formData);
 
     if (!displayName || displayName.length > 50) redirect(`${back}?error=name`);
     if (!Number.isInteger(birthYear) || birthYear < 1950 || thisYear - birthYear < 19) {
@@ -114,6 +97,8 @@ export default async function EditProfilePage({
       `UPDATE profile
           SET display_name = ?, birth_year = ?, region = ?, job = ?,
               self_intro = ?, photo_key = ?,
+              hobbies = ?, mbti = ?, height = ?,
+              drink_type = ?, drink_amount = ?, smoking = ?, religion = ?, ideal_type = ?,
               recommendation = CASE WHEN ? THEN ? ELSE recommendation END
         WHERE id = ?`,
       [
@@ -123,6 +108,14 @@ export default async function EditProfilePage({
         job,
         mine ? selfIntro : p.self_intro,
         photoKey,
+        extras.hobbies,
+        extras.mbti,
+        extras.height,
+        extras.drink_type,
+        extras.drink_amount,
+        extras.smoking,
+        extras.religion,
+        extras.ideal_type,
         authorBefore ? 1 : 0,
         recommendation || null,
         profileId,
@@ -275,6 +268,8 @@ export default async function EditProfilePage({
             />
             <p className="text-ink-3 mt-1 text-xs">새로 올리면 기존 사진은 지워져요.</p>
           </div>
+
+          <ProfileExtraFields defaults={profile} open />
 
           <button type="submit" className="btn btn-primary">
             저장

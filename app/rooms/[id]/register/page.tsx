@@ -6,32 +6,14 @@ import { requireRoomAccess, unlockRoom } from '@/lib/rooms';
 import { savePhoto, PhotoError } from '@/lib/photos';
 import { newToken, linkExpiry } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
+import ProfileExtraFields from '@/components/ProfileExtraFields';
+import { REGIONS, parseExtras } from '@/lib/profileFields';
 
 // 프로필 등록 (PRODUCT 13~18).
 //
 // MVP에는 승인 대기가 없다. 등록하면 곧바로 방에 공개된다.
 // 대신 친구 등록이면 "가져가기 링크"를 발급해서, 본인이 자기 카드의 주인이 되어
 // 직접 고치고 지울 수 있게 한다. 이게 승인 게이트를 뺀 자리를 메우는 최소선이다.
-
-const REGIONS = [
-  '서울',
-  '경기',
-  '인천',
-  '부산',
-  '대구',
-  '대전',
-  '광주',
-  '울산',
-  '세종',
-  '강원',
-  '충북',
-  '충남',
-  '전북',
-  '전남',
-  '경북',
-  '경남',
-  '제주',
-];
 
 export default async function RegisterPage({
   params,
@@ -114,6 +96,7 @@ export default async function RegisterPage({
     const selfIntro = String(formData.get('self_intro') ?? '').trim() || null;
     const consent = formData.get('consent') === 'on';
     const photo = formData.get('photo');
+    const extras = parseExtras(formData);
 
     if (!displayName || displayName.length > 50) redirect(`${back}&error=name`);
     if (gender !== 'MALE' && gender !== 'FEMALE') redirect(`${back}&error=gender`);
@@ -147,8 +130,9 @@ export default async function RegisterPage({
           display_name, gender, birth_year, region, job,
           recommendation, self_intro, photo_key,
           consent_type, consent_confirmed_at,
-          claim_token, claim_token_expires_at, claimed_at)
-       VALUES (?, ?, ?, 'ACTIVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          claim_token, claim_token_expires_at, claimed_at,
+          hobbies, mbti, height, drink_type, drink_amount, smoking, religion, ideal_type)
+       VALUES (?, ?, ?, 'ACTIVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         roomId,
         me.id,
@@ -166,6 +150,14 @@ export default async function RegisterPage({
         claimToken,
         claimToken ? linkExpiry() : null,
         isSelf ? new Date() : null,
+        extras.hobbies,
+        extras.mbti,
+        extras.height,
+        extras.drink_type,
+        extras.drink_amount,
+        extras.smoking,
+        extras.religion,
+        extras.ideal_type,
       ],
     );
 
@@ -327,6 +319,8 @@ export default async function RegisterPage({
               className="text-ink-2 file:bg-haze mt-2 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-sm"
             />
           </div>
+
+          <ProfileExtraFields />
 
           {!isSelf && (
             <label className="bg-warn-soft flex gap-3 rounded-xl p-4">
