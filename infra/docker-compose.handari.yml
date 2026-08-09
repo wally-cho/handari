@@ -47,5 +47,8 @@ services:
       start_period: 20s
 
 networks:
+  # deploy-handari.sh가 미리 만든다. compose가 소유권을 주장하면
+  # "incorrect label" 로 배포가 막힌다
   handari-network:
     name: handari-network
+    external: true
