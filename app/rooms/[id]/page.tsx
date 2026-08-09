@@ -92,7 +92,7 @@ export default async function RoomPage({
     );
   }
 
-  // 품절된 카드는 목록에서 빠진다 (PRODUCT 49). 내가 등록한 카드는 그대로 보인다 (PRODUCT 32).
+  // 소개를 쉬는 카드는 목록에서 빠진다 (PRODUCT 49). 내가 등록한 카드는 그대로 보인다 (PRODUCT 32).
   const profiles = await query<ProfileRow & { author_nickname: string }>(
     `SELECT p.*, u.nickname AS author_nickname
        FROM profile p

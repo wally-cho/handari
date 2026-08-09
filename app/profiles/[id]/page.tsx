@@ -9,10 +9,11 @@ import { notify } from '@/lib/notify';
 import { daysFromNow, INTEREST_TTL_DAYS } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
 import { drinkText, religionText, smokingText } from '@/lib/profileFields';
-import { Badge, Box, Button, ButtonLink, Caption, Notice } from '@/components/ui';
+import { ageOf } from '@/lib/age';
+import { ActionList, ActionRow, Badge, Box, Button, Caption, Notice } from '@/components/ui';
 import type { ProfileRow, InterestRow } from '@/lib/types';
 
-// 카드 상세. 관심 표시, 품절 토글, 신고, 삭제가 여기 모인다.
+// 카드 상세. 관심 표시, 소개 멈춤/재개, 신고, 삭제가 여기 모인다.
 
 interface DetailView extends ProfileRow {
   author_nickname: string;
@@ -210,7 +211,7 @@ export default async function ProfileDetailPage({
   ).filter((d): d is [string, string] => Boolean(d[1]));
 
   const photo = photoUrl(profile.photo_key);
-  const age = new Date().getFullYear() - profile.birth_year + 1;
+  const age = ageOf(profile.birth_year);
   const paused = profile.status === 'PAUSED';
 
   return (
@@ -253,7 +254,7 @@ export default async function ProfileDetailPage({
         <div className="px-6 pt-5">
           <div className="flex items-center gap-2">
             <h2 className="text-[26px] font-bold tracking-[-0.035em]">{profile.display_name}</h2>
-            {paused && <Badge>품절</Badge>}
+            {paused && <Badge>쉬는 중</Badge>}
             {profile.claimed_at == null && <Badge tone="warn">본인 미확인</Badge>}
           </div>
 
@@ -303,56 +304,64 @@ export default async function ProfileDetailPage({
             </Caption>
           )}
 
-          <div className="mt-8 space-y-2.5">
-            {!isMine &&
-              profile.status === 'ACTIVE' &&
-              (pending ? (
-                <form action={cancelInterest}>
-                  <Button type="submit" tone="ghost">
-                    관심 취소하기
-                  </Button>
-                </form>
-              ) : (
-                <form action={sendInterest}>
-                  <Button type="submit">관심 표시하기</Button>
-                </form>
-              ))}
+          {/*
+            남의 카드에서 할 일은 관심 하나뿐이다. 그것만 버튼으로 둔다.
+            내 카드를 손보는 동작은 아래 ActionList로 모은다 — 전폭 버튼 네 개가 쌓이면
+            전부 같은 무게로 보여서 무엇이 이 화면의 본론인지 알 수 없다.
+          */}
+          {!isMine &&
+            (profile.status === 'ACTIVE' ? (
+              <div className="mt-8">
+                {pending ? (
+                  <form action={cancelInterest}>
+                    <Button type="submit" tone="ghost">
+                      관심 취소하기
+                    </Button>
+                  </form>
+                ) : (
+                  <form action={sendInterest}>
+                    <Button type="submit">관심 표시하기</Button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              paused && (
+                <Caption className="mt-8 text-center">
+                  지금은 소개를 쉬고 있어요. 다시 시작하면 목록에 나타나요.
+                </Caption>
+              )
+            ))}
 
-            {isAuthor && profile.claimed_at == null && (
-              <ButtonLink href={`/profiles/${profileId}/share`} tone="ghost">
-                친구에게 링크 보내기
-              </ButtonLink>
-            )}
+          {(isMine || isAuthor) && (
+            <ActionList title={isMine ? '내 카드' : '내가 소개한 카드'}>
+              {canEdit && <ActionRow href={`/profiles/${profileId}/edit`} label="고치기" />}
 
-            {canEdit && (
-              <ButtonLink href={`/profiles/${profileId}/edit`} tone="ghost">
-                고치기
-              </ButtonLink>
-            )}
+              {isAuthor && profile.claimed_at == null && (
+                <ActionRow href={`/profiles/${profileId}/share`} label="본인에게 링크 보내기" />
+              )}
 
-            {(isMine || isAuthor) && (
               <form action={togglePause}>
-                <Button type="submit" tone="ghost">
-                  {paused ? '다시 찾는 중으로' : '품절로 내리기'}
-                </Button>
+                <ActionRow
+                  label={paused ? '다시 소개 시작하기' : '소개 잠시 멈추기'}
+                  hint={paused ? undefined : '목록에서 안 보이게 해요'}
+                />
               </form>
-            )}
-          </div>
 
-          <div className="text-ink-3 mt-12 flex justify-center gap-6 text-[13px]">
-            {!isMine && (
+              {canEdit && (
+                <form action={remove}>
+                  <ActionRow label="카드 삭제" danger />
+                </form>
+              )}
+            </ActionList>
+          )}
+
+          {!isMine && (
+            <p className="text-ink-3 mt-12 text-center text-[13px]">
               <Link href={`/profiles/${profileId}/report`} className="underline underline-offset-4">
                 신고하기
               </Link>
-            )}
-            {canEdit && (
-              <form action={remove}>
-                <button type="submit" className="underline underline-offset-4">
-                  카드 삭제
-                </button>
-              </form>
-            )}
-          </div>
+            </p>
+          )}
         </div>
       </main>
     </>

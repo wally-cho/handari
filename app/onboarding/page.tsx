@@ -2,12 +2,11 @@ import { redirect } from 'next/navigation';
 import { execute } from '@/lib/db';
 import { getCurrentUser, isOnboarded } from '@/lib/session';
 import { Button, Caption, ChoiceGroup, Field, Input, Notice, PageTitle } from '@/components/ui';
+import { isAdult, isBirthYearShaped, OLDEST_BIRTH_YEAR } from '@/lib/age';
 
 // 카카오에서 연령·성별을 받으려면 비즈 앱 전환(사업자 등록 + 검수)이 필요하다.
 // 취미 프로젝트 단계에서는 직접 입력받는다 (PRODUCT 3).
 // 비즈 앱으로 전환하면 이 화면을 건너뛰고 카카오 값으로 채우면 된다.
-
-const MIN_AGE = 19;
 
 const GENDERS = [
   { value: 'MALE', label: '남성' },
@@ -40,13 +39,9 @@ export default async function OnboardingPage({
     const gender = String(formData.get('gender'));
     const back = `/onboarding?next=${encodeURIComponent(after)}`;
 
-    if (!Number.isInteger(birthYear) || birthYear < 1950 || birthYear > thisYear) {
-      redirect(`${back}&error=birth_year`);
-    }
+    if (!isBirthYearShaped(birthYear)) redirect(`${back}&error=birth_year`);
     if (gender !== 'MALE' && gender !== 'FEMALE') redirect(`${back}&error=gender`);
-
-    // 만 나이 대신 연 나이로 본다. 자기신고라 정밀도보다 명확함이 낫다
-    if (thisYear - birthYear < MIN_AGE) redirect(`${back}&error=underage`);
+    if (!isAdult(birthYear)) redirect(`${back}&error=underage`);
 
     await execute(
       'UPDATE `user` SET birth_year = ?, gender = ?, age_verified_at = UTC_TIMESTAMP() WHERE id = ?',
@@ -80,7 +75,7 @@ export default async function OnboardingPage({
             type="number"
             inputMode="numeric"
             required
-            min={1950}
+            min={OLDEST_BIRTH_YEAR}
             max={thisYear}
             placeholder="1995"
           />
@@ -94,7 +89,7 @@ export default async function OnboardingPage({
       </form>
 
       <Caption className="mt-5">
-        나이와 성별은 카드에 표시돼요. 카드마다 따로 고칠 수도 있어요.
+        나이와 성별은 내 카드에 그대로 표시돼요. 나중에 내 정보에서 고칠 수 있어요.
       </Caption>
     </main>
   );

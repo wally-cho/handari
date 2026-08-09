@@ -106,7 +106,7 @@ const user = await getCurrentUser();    // 없으면 null
 ```tsx
 import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
          Card, Box, PageTitle, SectionTitle, Caption, Badge, ListRow,
-         EmptyState, Notice, Bell, ChevronLeft } from '@/components/ui';
+         ActionList, ActionRow, Tabs, EmptyState, Notice, Bell, ChevronLeft } from '@/components/ui';
 ```
 
 **색은 `app/globals.css`의 토큰만 쓴다.** 임의의 hex나 Tailwind 기본 팔레트(`neutral-*`, `red-*`)를 쓰지 않는다.
@@ -122,6 +122,10 @@ import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
 **규칙**
 
 - 화면당 primary 버튼은 하나만 둔다
+- **전폭 버튼을 세 개 이상 쌓지 않는다.** 전부 같은 무게로 보여서 무엇이 본론인지 알 수 없다.
+  화면의 주된 행동만 `<Button/>`으로 두고, 내 것을 손보는 동작(고치기·멈추기·삭제)은
+  `<ActionList/>` + `<ActionRow/>`로 묶는다. `ActionRow`는 `href`가 있으면 링크,
+  없으면 감싼 `<form>`의 submit이다
 - 알림은 **항상 종 아이콘**(`<Bell/>`). "알림" 텍스트로 노출하지 않는다
 - 뒤로가기는 **히스토리로 돌아간다**(`<BackButton/>`). `AppBar`의 `back`은 링크로 바로
   들어왔을 때의 fallback일 뿐이다. 고정 경로로 두면 방 → 알림 → 뒤로 가 홈으로 튄다
@@ -196,7 +200,9 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 
 2. **링크 사용 처리는 트랜잭션 + 영향 행 수 1 검사로 한다.** 같은 링크로 두 명이 동시에 들어오는 경쟁을 막아야 한다
 3. **`subject_user_id IS NULL` == 본인 미확인.** 별도 플래그를 만들지 않는다. 카드에 "본인 미확인" 배지가 붙는다 (PRODUCT 19)
 4. **열람 게이트** — `room_member.unlocked_at`이 NULL이면 남의 카드가 안 보인다. 등록하면 열리고, 한 번 열리면 다시 잠기지 않는다 (PRODUCT 9~11)
-5. **품절은 본인 선택이 주선자 선택보다 우선한다** (PRODUCT 51). 본인이 되돌린 카드를 주선자가 다시 내릴 수 없다
+5. **소개 쉬기는 본인 선택이 주선자 선택보다 우선한다** (PRODUCT 51). 본인이 되돌린 카드를 주선자가 다시 멈출 수 없다.
+   **"품절"이라는 말을 화면에 쓰지 않는다** — 사람을 물건으로 두는 표현이다. 상태는 `쉬는 중`,
+   동작은 `소개 잠시 멈추기` / `다시 소개 시작하기`. DB의 `PAUSED`는 그대로 둔다
 6. **거절 사유는 전달하지 않는다** (PRODUCT 23, 38). 지인 관계가 걸려 있다
 7. **`UNWANTED`/`NOT_SELF` 신고는 접수 즉시 `HIDDEN`으로 바꾼다** (PRODUCT 59). 운영자를 기다리지 않는다
 8. **초대자와 주선자는 다른 개념이다.** 초대자는 `room_member.invited_by_user_id`(방에
@@ -205,6 +211,10 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 
 9. **관심을 거둬도 알림을 보내지 않는다.** "거둬졌다"는 통보는 받는 쪽에 좋을 게 없다.
    대신 받은 관심 목록 쿼리에서 `status <> 'CANCELED'`로 빼서 조용히 사라지게 한다
 10. **`profile.status`의 `DRAFT`/`INVITED`는 MVP에서 쓰지 않는다.** 승인 게이트를 켤 때를 위해 enum에만 있다. 지우지 말 것
+11. **본인 카드의 성별·출생연도는 계정(`user`) 값이 출처다** (PRODUCT 17). 등록·수정 화면에서
+    묻지 않고 보여주기만 한다. `/me/edit`에서 고치면 `subject_user_id = 나`인 카드가 한
+    트랜잭션에서 같이 바뀐다. 카드마다 따로 받으면 내 정보와 카드의 나이가 갈라진다.
+    나이 계산과 하한(만 19세)은 `lib/age.ts` 한 곳에만 둔다
 
 ## 승인 게이트 (아직 없음)
 

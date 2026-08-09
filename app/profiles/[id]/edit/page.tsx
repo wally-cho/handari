@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { execute, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
@@ -6,6 +7,7 @@ import { savePhoto, deletePhoto, photoUrl, PhotoError } from '@/lib/photos';
 import AppBar from '@/components/AppBar';
 import ProfileExtraFields from '@/components/ProfileExtraFields';
 import { REGIONS, parseExtras } from '@/lib/profileFields';
+import { ageOf, isAdult, isBirthYearShaped, latestBirthYear, OLDEST_BIRTH_YEAR } from '@/lib/age';
 import type { ProfileRow } from '@/lib/types';
 
 // 카드 고치기.
@@ -38,7 +40,6 @@ export default async function EditProfilePage({
 
   // 본인은 추천사를 못 고친다. 주선자는(가져가기 전이면) 고칠 수 있다
   const canEditRecommendation = isAuthorBeforeClaim;
-  const thisYear = new Date().getFullYear();
 
   async function save(formData: FormData) {
     'use server';
@@ -57,7 +58,8 @@ export default async function EditProfilePage({
     const back = `/profiles/${profileId}/edit`;
     const displayName = String(formData.get('display_name') ?? '').trim();
     const region = String(formData.get('region') ?? '').trim();
-    const birthYear = Number(formData.get('birth_year'));
+    // 내 카드의 나이는 여기서 안 고친다. 계정 값이 출처다 — 내 정보에서 고치면 같이 바뀐다
+    const birthYear = mine ? Number(me.birth_year) : Number(formData.get('birth_year'));
     const job = String(formData.get('job') ?? '').trim() || null;
     const selfIntro = String(formData.get('self_intro') ?? '').trim() || null;
     const recommendation = String(formData.get('recommendation') ?? '').trim();
@@ -66,9 +68,7 @@ export default async function EditProfilePage({
     const extras = parseExtras(formData);
 
     if (!displayName || displayName.length > 50) redirect(`${back}?error=name`);
-    if (!Number.isInteger(birthYear) || birthYear < 1950 || thisYear - birthYear < 19) {
-      redirect(`${back}?error=birth_year`);
-    }
+    if (!isBirthYearShaped(birthYear) || !isAdult(birthYear)) redirect(`${back}?error=birth_year`);
     if (!region) redirect(`${back}?error=region`);
     if (authorBefore && recommendation.length > 0 && recommendation.length < 20) {
       redirect(`${back}?error=recommendation`);
@@ -182,7 +182,20 @@ export default async function EditProfilePage({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* 내 카드의 나이는 계정 값이 출처다. 여기서 또 받으면 내 정보와 갈라진다 */}
+          {isMine ? (
+            <div className="bg-fill-2 flex items-center gap-3 rounded-2xl px-[18px] py-4">
+              <p className="mark min-w-0 flex-1 text-[15px] font-medium">
+                {ageOf(profile.birth_year)}세
+                <span className="text-ink-3 mt-0.5 block text-[13px] font-normal">
+                  내 정보에 저장된 값이에요
+                </span>
+              </p>
+              <Link href="/me/edit" className="text-ink-2 shrink-0 text-[14px] font-medium">
+                고치기
+              </Link>
+            </div>
+          ) : (
             <div>
               <label htmlFor="birth_year" className="block text-sm font-medium">
                 출생연도
@@ -193,30 +206,31 @@ export default async function EditProfilePage({
                 type="number"
                 inputMode="numeric"
                 required
-                min={1950}
-                max={thisYear - 19}
+                min={OLDEST_BIRTH_YEAR}
+                max={latestBirthYear()}
                 defaultValue={profile.birth_year}
                 className="field"
               />
             </div>
-            <div>
-              <label htmlFor="region" className="block text-sm font-medium">
-                지역
-              </label>
-              <select
-                id="region"
-                name="region"
-                required
-                defaultValue={profile.region}
-                className="field"
-              >
-                {REGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
+          )}
+
+          <div>
+            <label htmlFor="region" className="block text-sm font-medium">
+              지역
+            </label>
+            <select
+              id="region"
+              name="region"
+              required
+              defaultValue={profile.region}
+              className="field"
+            >
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

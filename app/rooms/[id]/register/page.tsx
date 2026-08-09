@@ -8,6 +8,7 @@ import { newToken, linkExpiry } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
 import ProfileExtraFields from '@/components/ProfileExtraFields';
 import { REGIONS, parseExtras } from '@/lib/profileFields';
+import { ageOf, isAdult, isBirthYearShaped, latestBirthYear, OLDEST_BIRTH_YEAR } from '@/lib/age';
 
 // 프로필 등록 (PRODUCT 13~18).
 //
@@ -27,8 +28,6 @@ export default async function RegisterPage({
   const user = await requireUser(`/rooms/${id}/register`);
   const { room } = await requireRoomAccess(roomId, user.id);
   const { type, error } = await searchParams;
-
-  const thisYear = new Date().getFullYear();
 
   // 등록 대상 선택 화면
   if (type !== 'self' && type !== 'friend') {
@@ -88,8 +87,10 @@ export default async function RegisterPage({
     const back = `/rooms/${roomId}/register?type=${isSelf ? 'self' : 'friend'}`;
 
     const displayName = String(formData.get('display_name') ?? '').trim();
-    const gender = String(formData.get('gender') ?? '');
-    const birthYear = Number(formData.get('birth_year'));
+    // 본인 카드의 나이·성별은 물어보지 않는다. 계정에 있는 값이 곧 내 값이다 —
+    // 따로 받으면 내 정보와 내 카드의 나이가 갈라진다
+    const gender = isSelf ? (me.gender ?? '') : String(formData.get('gender') ?? '');
+    const birthYear = isSelf ? Number(me.birth_year) : Number(formData.get('birth_year'));
     const region = String(formData.get('region') ?? '').trim();
     const job = String(formData.get('job') ?? '').trim() || null;
     const recommendation = String(formData.get('recommendation') ?? '').trim();
@@ -100,9 +101,7 @@ export default async function RegisterPage({
 
     if (!displayName || displayName.length > 50) redirect(`${back}&error=name`);
     if (gender !== 'MALE' && gender !== 'FEMALE') redirect(`${back}&error=gender`);
-    if (!Number.isInteger(birthYear) || birthYear < 1950 || thisYear - birthYear < 19) {
-      redirect(`${back}&error=birth_year`);
-    }
+    if (!isBirthYearShaped(birthYear) || !isAdult(birthYear)) redirect(`${back}&error=birth_year`);
     if (!region) redirect(`${back}&error=region`);
 
     if (!isSelf) {
@@ -230,65 +229,80 @@ export default async function RegisterPage({
             />
           </div>
 
-          <fieldset>
-            <legend className="text-sm font-medium">성별</legend>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {(
-                [
-                  ['MALE', '남성'],
-                  ['FEMALE', '여성'],
-                ] as const
-              ).map(([value, label]) => (
-                <label
-                  key={value}
-                  className="bg-fill text-ink-2 has-checked:bg-brand-soft has-checked:text-brand cursor-pointer rounded-[14px] py-3.5 text-center text-[15px] font-medium has-checked:font-semibold"
-                >
-                  <input
-                    type="radio"
-                    name="gender"
-                    value={value}
-                    required
-                    defaultChecked={isSelf && user.gender === value}
-                    className="sr-only"
-                  />
-                  {label}
-                </label>
-              ))}
+          {/* 본인 카드의 나이·성별은 계정 값을 그대로 쓴다. 여기서 또 받으면 두 값이 갈라진다 */}
+          {isSelf ? (
+            <div className="bg-fill-2 flex items-center gap-3 rounded-2xl px-[18px] py-4">
+              <p className="mark min-w-0 flex-1 text-[15px] font-medium">
+                {user.birth_year && `${ageOf(user.birth_year)}세`}
+                {user.gender && ` · ${user.gender === 'MALE' ? '남성' : '여성'}`}
+                <span className="text-ink-3 mt-0.5 block text-[13px] font-normal">
+                  내 정보에 저장된 값이에요
+                </span>
+              </p>
+              <Link href="/me/edit" className="text-ink-2 shrink-0 text-[14px] font-medium">
+                고치기
+              </Link>
             </div>
-          </fieldset>
+          ) : (
+            <>
+              <fieldset>
+                <legend className="text-sm font-medium">성별</legend>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      ['MALE', '남성'],
+                      ['FEMALE', '여성'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className="bg-fill text-ink-2 has-checked:bg-brand-soft has-checked:text-brand cursor-pointer rounded-[14px] py-3.5 text-center text-[15px] font-medium has-checked:font-semibold"
+                    >
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={value}
+                        required
+                        className="sr-only"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="birth_year" className="block text-sm font-medium">
-                출생연도
-              </label>
-              <input
-                id="birth_year"
-                name="birth_year"
-                type="number"
-                inputMode="numeric"
-                required
-                min={1950}
-                max={thisYear - 19}
-                defaultValue={isSelf ? (user.birth_year ?? undefined) : undefined}
-                className="field"
-              />
-            </div>
-            <div>
-              <label htmlFor="region" className="block text-sm font-medium">
-                지역
-              </label>
-              <select id="region" name="region" required defaultValue="" className="field">
-                <option value="" disabled>
-                  선택
+              <div>
+                <label htmlFor="birth_year" className="block text-sm font-medium">
+                  출생연도
+                </label>
+                <input
+                  id="birth_year"
+                  name="birth_year"
+                  type="number"
+                  inputMode="numeric"
+                  required
+                  min={OLDEST_BIRTH_YEAR}
+                  max={latestBirthYear()}
+                  className="field"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label htmlFor="region" className="block text-sm font-medium">
+              지역
+            </label>
+            <select id="region" name="region" required defaultValue="" className="field">
+              <option value="" disabled>
+                선택
+              </option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
                 </option>
-                {REGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
+              ))}
+            </select>
           </div>
 
           <div>

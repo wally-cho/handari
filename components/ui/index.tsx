@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ChevronRight } from './icons';
 
 // 디자인 시스템 프리미티브.
 //
@@ -274,6 +275,56 @@ export function ListRow({
     </Link>
   ) : (
     inner
+  );
+}
+
+/**
+ * 관리 동작 묶음.
+ *
+ * 전폭 버튼을 여러 개 쌓으면 전부 같은 무게로 보여서 뭘 눌러야 할지 고르는 데 시간이 든다.
+ * 화면의 주된 행동만 Button으로 두고, 내 것을 손보는 동작(고치기·멈추기·삭제)은 여기 모은다.
+ */
+export function ActionList({ title, children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-8">
+      {title && <p className="text-ink-3 mb-1.5 px-1 text-[13px] font-semibold">{title}</p>}
+      <div className="bg-fill-2 divide-haze divide-y rounded-2xl px-[18px]">{children}</div>
+    </div>
+  );
+}
+
+/** ActionList의 한 줄. href가 있으면 링크, 없으면 감싼 form의 submit */
+export function ActionRow({
+  href,
+  label,
+  hint,
+  danger,
+}: {
+  href?: string;
+  label: string;
+  hint?: string;
+  danger?: boolean;
+}) {
+  const cls = `flex w-full items-center gap-3 py-3.5 text-left text-[15px] font-medium active:opacity-60 ${
+    danger ? 'text-alert' : ''
+  }`;
+  const inner = (
+    <>
+      <span className="min-w-0 flex-1">
+        {label}
+        {hint && <span className="text-ink-3 ml-2 text-[13px] font-normal">{hint}</span>}
+      </span>
+      {href && <ChevronRight size={18} className="text-ink-3 shrink-0" />}
+    </>
+  );
+  return href ? (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="submit" className={cls}>
+      {inner}
+    </button>
   );
 }
 

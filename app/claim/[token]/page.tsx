@@ -5,6 +5,7 @@ import { getCurrentUser, isOnboarded } from '@/lib/session';
 import { isExpired } from '@/lib/tokens';
 import { deletePhoto, photoUrl } from '@/lib/photos';
 import { notify } from '@/lib/notify';
+import { ageOf } from '@/lib/age';
 import type { ProfileRow } from '@/lib/types';
 
 // 카드 가져가기 (PRODUCT 22~24).
@@ -122,7 +123,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
   }
 
   const photo = photoUrl(profile.photo_key);
-  const age = new Date().getFullYear() - profile.birth_year + 1;
+  const age = ageOf(profile.birth_year);
 
   return (
     <main className="px-6 py-10">

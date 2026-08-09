@@ -7,7 +7,7 @@ export type ProfileStatus =
   | 'DRAFT' // MVP 미사용. 승인 게이트를 켤 때 쓴다
   | 'INVITED' // MVP 미사용
   | 'ACTIVE'
-  | 'PAUSED' // 품절
+  | 'PAUSED' // 소개 쉬는 중
   | 'HIDDEN' // 신고로 자동 비공개
   | 'DELETED';
 

@@ -50,7 +50,7 @@ export function notificationText(
     case 'CONNECTION_DONE':
       return { title: '연결됐어요! 카톡 확인해보세요' };
     case 'PAUSED_BY_MATCHMAKER':
-      return { title: '주선자가 품절로 바꿨어요. 아니면 되돌려주세요' };
+      return { title: '주선자가 소개를 잠시 멈췄어요. 아니면 되돌려주세요' };
     case 'CLAIM_REMINDER':
       return { title: '친구분이 아직 카드를 안 가져갔어요' };
     default:

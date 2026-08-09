@@ -1,5 +1,6 @@
 import { photoUrl } from '@/lib/photos';
 import { degreeLabel } from '@/lib/graph';
+import { ageOf } from '@/lib/age';
 import { Badge, Card } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
@@ -13,7 +14,7 @@ export interface CardData extends ProfileRow {
 
 export default function ProfileCard({ card }: { card: CardData }) {
   const photo = photoUrl(card.photo_key);
-  const age = new Date().getFullYear() - card.birth_year + 1;
+  const age = ageOf(card.birth_year);
   const isSelf = card.subject_user_id === card.author_user_id;
 
   return (

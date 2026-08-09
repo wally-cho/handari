@@ -1,8 +1,19 @@
+import Link from 'next/link';
 import { query } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { signOut } from '@/auth';
 import AppBar from '@/components/AppBar';
-import { Badge, Button, ButtonLink, EmptyState, ListRow, SectionTitle } from '@/components/ui';
+import { ageOf } from '@/lib/age';
+import {
+  Badge,
+  Button,
+  ButtonLink,
+  ChevronRight,
+  EmptyState,
+  ListRow,
+  Notice,
+  SectionTitle,
+} from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
 // 마이페이지. 내 카드, 내가 소개한 사람, 관심 현황.
@@ -12,8 +23,13 @@ interface MyCard extends ProfileRow {
   room_name: string;
 }
 
-export default async function MyPage() {
+export default async function MyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
   const user = await requireUser('/me');
+  const { saved } = await searchParams;
 
   // 서로 의존이 없으므로 같이 기다린다
   const [myCards, registered] = await Promise.all([
@@ -40,14 +56,23 @@ export default async function MyPage() {
     await signOut({ redirectTo: '/' });
   }
 
-  const age = user.birth_year ? new Date().getFullYear() - user.birth_year + 1 : null;
+  const age = user.birth_year ? ageOf(user.birth_year) : null;
 
   return (
     <>
       <AppBar title="내 정보" back="/" userId={user.id} />
 
       <main className="px-6 pt-2 pb-16">
-        <div className="flex items-center gap-3.5">
+        {saved && (
+          <div className="mb-5">
+            <Notice tone="good">저장했어요. 내 카드에도 반영했어요.</Notice>
+          </div>
+        )}
+
+        <Link
+          href="/me/edit"
+          className="-mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-1 active:opacity-60"
+        >
           {user.kakao_profile_image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -58,14 +83,15 @@ export default async function MyPage() {
           ) : (
             <div className="bg-fill h-16 w-16 rounded-full" />
           )}
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-[19px] font-bold tracking-[-0.03em]">{user.nickname}</p>
             <p className="text-ink-3 mark mt-0.5 text-[14px]">
               {age && `${age}세`}
               {user.gender && ` · ${user.gender === 'MALE' ? '남성' : '여성'}`}
             </p>
           </div>
-        </div>
+          <ChevronRight size={20} className="text-ink-3 shrink-0" />
+        </Link>
 
         <ButtonLink href="/interests" tone="ghost" className="mt-6">
           주고받은 관심 보기
@@ -85,7 +111,7 @@ export default async function MyPage() {
                     sub={card.room_name}
                     right={
                       card.status === 'PAUSED' ? (
-                        <Badge>품절</Badge>
+                        <Badge>쉬는 중</Badge>
                       ) : card.status === 'HIDDEN' ? (
                         <Badge tone="alert">신고됨</Badge>
                       ) : (
