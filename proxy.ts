@@ -22,6 +22,11 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // 정적 자산은 검사하지 않는다 — 어차피 CloudFront가 캐시해서 오리진까지 안 온다
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // 정적 자산은 검사하지 않는다. 두 가지 이유가 있다.
+  //   1. CloudFront가 캐시해서 오리진까지 잘 오지 않는다
+  //   2. 이미지 최적화기가 public/ 파일을 자기 자신에게 다시 요청하는데,
+  //      그 내부 요청에는 x-origin-verify 헤더가 없다. 막으면 이미지가 깨진다
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpe?g|gif|webp|avif|svg|ico|txt|xml|webmanifest)$).*)',
+  ],
 };
