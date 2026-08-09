@@ -87,6 +87,10 @@ const user = await getCurrentUser();    // 없으면 null
 
 **기본은 서버 컴포넌트다.** 폼은 Server Action으로 처리한다. `'use client'`는 정말 필요할 때만 쓴다 — 이 앱은 실시간 기능이 없어서 대부분 필요 없다.
 
+**빌드 시점에 DB에 붙지 않는다.** 커넥션 풀은 `getPool()`로 첫 쿼리 때 만든다.
+모듈 로드 시점에 만들면 `next build`가 라우트 설정을 수집하며 파일을 평가할 때
+`DATABASE_URL`이 없어 빌드가 깨진다 — CI와 Docker 빌드에는 그 값이 없다.
+
 **시각은 UTC로 저장한다.** `lib/db.ts`가 세션 타임존을 `+00:00`으로 맞춘다. SQL에서 `NOW()` 대신 `UTC_TIMESTAMP()`를 쓴다. 표시할 때만 KST로 바꾼다.
 
 **Next 16 주의**

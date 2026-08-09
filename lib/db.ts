@@ -45,12 +45,23 @@ function withUtcSession(p: mysql.Pool): mysql.Pool {
   return p;
 }
 
-export const pool: mysql.Pool = global.__handariPool ?? withUtcSession(createPool());
-if (process.env.NODE_ENV !== 'production') global.__handariPool = pool;
+/**
+ * 풀은 첫 쿼리 때 만든다.
+ *
+ * 모듈 로드 시점에 만들면 `next build`가 라우트 설정을 수집하면서 이 파일을 평가할 때
+ * DATABASE_URL이 없어 빌드가 깨진다. CI와 Docker 빌드에는 그 값이 없고, 있을 이유도 없다 —
+ * 빌드는 DB에 붙지 않는다.
+ */
+export function getPool(): mysql.Pool {
+  if (!global.__handariPool) {
+    global.__handariPool = withUtcSession(createPool());
+  }
+  return global.__handariPool;
+}
 
 /** SELECT 전용. 호출부에서 행 타입을 명시한다 — query<ProfileRow>(...) */
 export async function query<T>(sql: string, params?: SqlParam[]): Promise<T[]> {
-  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  const [rows] = await getPool().execute<RowDataPacket[]>(sql, params);
   return rows as T[];
 }
 
@@ -62,7 +73,7 @@ export async function queryOne<T>(sql: string, params?: SqlParam[]): Promise<T |
 
 /** INSERT / UPDATE / DELETE. affectedRows와 insertId를 준다 */
 export async function execute(sql: string, params?: SqlParam[]): Promise<ResultSetHeader> {
-  const [result] = await pool.execute<ResultSetHeader>(sql, params);
+  const [result] = await getPool().execute<ResultSetHeader>(sql, params);
   return result;
 }
 
@@ -82,7 +93,7 @@ export async function transaction<T>(
     execute: (sql: string, params?: SqlParam[]) => Promise<ResultSetHeader>;
   }) => Promise<T>,
 ): Promise<T> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     await conn.beginTransaction();
     const tx = {
