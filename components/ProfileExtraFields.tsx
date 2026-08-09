@@ -1,4 +1,5 @@
-import { DRINK_TYPES, MBTI_TYPES, RELIGIONS } from '@/lib/profileFields';
+import { MBTI_TYPES, RELIGIONS } from '@/lib/profileFields';
+import DrinkField from '@/components/DrinkField';
 import { ChoiceGroup, Field, Input, Select, Textarea } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
@@ -32,11 +33,11 @@ export default function ProfileExtraFields({
     <details open={open} className="bg-fill-2 rounded-2xl px-4 py-3.5">
       <summary className="cursor-pointer list-none text-[15px] font-semibold">
         더 알려주기
-        <span className="text-ink-3 ml-1.5 text-[13px] font-normal">선택</span>
+        <span className="text-ink-3 ml-1.5 text-[13px] font-normal">전부 선택이에요</span>
       </summary>
 
       <div className="mt-5 space-y-6 pb-1">
-        <Field label="취미" htmlFor="hobbies" optional>
+        <Field label="취미" htmlFor="hobbies">
           <Input
             id="hobbies"
             name="hobbies"
@@ -47,7 +48,7 @@ export default function ProfileExtraFields({
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="MBTI" htmlFor="mbti" optional>
+          <Field label="MBTI" htmlFor="mbti">
             <Select id="mbti" name="mbti" defaultValue={d?.mbti ?? ''}>
               <option value="">선택 안 함</option>
               {MBTI_TYPES.map((t) => (
@@ -58,7 +59,7 @@ export default function ProfileExtraFields({
             </Select>
           </Field>
 
-          <Field label="키" htmlFor="height" optional>
+          <Field label="키" htmlFor="height">
             <Input
               id="height"
               name="height"
@@ -72,31 +73,9 @@ export default function ProfileExtraFields({
           </Field>
         </div>
 
-        <Field label="주량" hint="종류를 고르고 마시는 양을 적어주세요" optional>
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <Select name="drink_type" defaultValue={d?.drink_type ?? ''} aria-label="술 종류">
-              <option value="">선택 안 함</option>
-              {DRINK_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </Select>
-            <Input
-              name="drink_amount"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={99}
-              defaultValue={d?.drink_amount ?? ''}
-              placeholder="양"
-              aria-label="주량"
-              className="!w-24"
-            />
-          </div>
-        </Field>
+        <DrinkField defaultType={d?.drink_type} defaultAmount={d?.drink_amount} />
 
-        <Field label="담배" optional>
+        <Field label="담배">
           <ChoiceGroup
             name="smoking"
             defaultValue={d?.smoking == null ? undefined : d.smoking ? 'Y' : 'N'}
@@ -107,7 +86,7 @@ export default function ProfileExtraFields({
           />
         </Field>
 
-        <Field label="종교" htmlFor="religion" optional>
+        <Field label="종교" htmlFor="religion">
           <Select id="religion" name="religion" defaultValue={d?.religion ?? ''}>
             <option value="">선택 안 함</option>
             {RELIGIONS.map((r) => (
@@ -118,7 +97,7 @@ export default function ProfileExtraFields({
           </Select>
         </Field>
 
-        <Field label="이런 사람이면 좋겠어요" htmlFor="ideal_type" optional>
+        <Field label="이런 사람이면 좋겠어요" htmlFor="ideal_type">
           <Textarea
             id="ideal_type"
             name="ideal_type"
