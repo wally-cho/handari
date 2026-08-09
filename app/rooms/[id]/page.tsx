@@ -115,13 +115,16 @@ export default async function RoomPage({
       <AppBar title={room.name} back="/" userId={user.id} action={manageLink} />
 
       <main className="px-6 pt-1 pb-32">
-        <Caption className="mb-3">참여자 {stats?.members ?? 0}명</Caption>
+        {/* 방 현황과 그에 딸린 액션을 한 줄에 둔다.
+            전체 폭 버튼으로 두면 하단 "등록하기"와 무게가 비슷해 보인다 */}
+        <div className="mb-4 flex items-center justify-between">
+          <Caption>참여자 {stats?.members ?? 0}명</Caption>
+          <Link href={`/rooms/${roomId}/invite`} className="text-brand text-[14px] font-semibold">
+            친구 초대
+          </Link>
+        </div>
 
-        <ButtonLink href={`/rooms/${roomId}/invite`} tone="ghost" small className="!w-full">
-          초대 링크 만들기
-        </ButtonLink>
-
-        <div className="mt-6">
+        <div>
           <Tabs
             items={[
               {
