@@ -67,14 +67,16 @@ export default async function NotificationsPage() {
         {items.length === 0 ? (
           <EmptyState>아직 알림이 없어요.</EmptyState>
         ) : (
-          <ul className="divide-haze divide-y">
+          <ul className="space-y-1">
             {items.map((n) => {
               const unread = n.read_at == null;
               return (
                 <li key={n.id}>
                   <Link
                     href={hrefFor(n)}
-                    className="-mx-2 flex items-start gap-2.5 px-2 py-4 active:opacity-60"
+                    className={`-mx-3 flex items-start gap-2.5 rounded-2xl px-3 py-4 active:opacity-60 ${
+                      unread ? 'bg-brand-soft' : ''
+                    }`}
                   >
                     <span
                       className={`mt-[7px] h-[6px] w-[6px] shrink-0 rounded-full ${unread ? 'dot' : 'bg-transparent'}`}
@@ -82,12 +84,13 @@ export default async function NotificationsPage() {
                     />
                     <span className="min-w-0 flex-1">
                       <span
-                        className={`kr block text-[15px] leading-snug ${unread ? 'font-semibold' : 'text-ink-2'}`}
+                        className={`kr block text-[15px] leading-snug ${unread ? 'font-bold' : 'text-ink-2'}`}
                       >
                         {notificationText(n.type, n.payload).title}
                       </span>
                       <span className="text-ink-3 mark mt-1 block text-[13px]">
                         {timeAgo(n.created_at)}
+                        {unread && <span className="text-brand ml-1.5 font-semibold">새 알림</span>}
                       </span>
                     </span>
                   </Link>

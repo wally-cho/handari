@@ -17,9 +17,11 @@ export async function NotificationBell({ userId }: { userId: number }) {
       <Bell size={22} />
       {unread > 0 && (
         <span
-          className="dot absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full ring-2 ring-white"
+          className="dot mark absolute -top-0.5 -right-0.5 min-w-[18px] rounded-full px-1 text-center text-[11px] leading-[18px] font-bold text-white ring-2 ring-white"
           aria-label={`안 읽은 알림 ${unread}개`}
-        />
+        >
+          {unread > 99 ? '99+' : unread}
+        </span>
       )}
       <span className="sr-only">알림</span>
     </Link>

@@ -1,4 +1,5 @@
 import { photoUrl } from '@/lib/photos';
+import { degreeLabel } from '@/lib/graph';
 import { Badge, Card } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
@@ -46,6 +47,7 @@ export default function ProfileCard({ card }: { card: CardData }) {
           </p>
 
           <p className="text-ink-3 mt-1 text-[13px]">
+            {degreeLabel(card.degree)} ·{' '}
             {isSelf ? '본인이 등록' : `${card.author_nickname}님이 소개`}
           </p>
         </div>

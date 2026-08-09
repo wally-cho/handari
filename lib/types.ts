@@ -130,7 +130,6 @@ export type NotificationType =
   | 'CARD_CLAIMED' // 친구분이 카드를 가져갔어요
   | 'CARD_DROPPED' // 친구분이 카드를 내렸어요
   | 'INTEREST_RECEIVED' // 관심이 왔어요
-  | 'INTEREST_CANCELED' // 보낸 사람이 관심을 거뒀어요
   | 'INTEREST_UNCLAIMED' // 친구분이 아직 카드를 안 가져갔어요
   | 'MATCHMAKER_COMMENT' // 주선자가 한마디 남겼어요
   | 'INTEREST_ACCEPTED'

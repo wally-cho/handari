@@ -5,23 +5,16 @@ import { requireRoomAccess } from '@/lib/rooms';
 import { distancesFrom, degreeToProfile } from '@/lib/graph';
 import AppBar from '@/components/AppBar';
 import ProfileCard, { type CardData } from '@/components/ProfileCard';
-import { Box, ButtonLink, Caption, EmptyState, SectionTitle } from '@/components/ui';
+import { Box, ButtonLink, Caption, EmptyState } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
 // 방 홈 = 카드 목록.
 //
-// 다리 수가 바뀌는 지점마다 섹션이 갈린다. 정렬 순서(다리 수 오름차순, PRODUCT 31)가
-// 그대로 화면 구조가 된다 — 내려갈수록 나에게서 멀어진다.
+// 한 목록으로 쭉 내려간다. 다리 수는 섹션으로 가르지 않고 카드마다 라벨로 붙는다 —
+// 방이 작을 때 섹션으로 쪼개면 한두 장짜리 토막이 여럿 생겨 오히려 읽기 어렵다.
+// 정렬은 다리 수가 가까운 순이다 (PRODUCT 31).
 //
 // 열람 게이트를 통과하지 못했으면 카드 대신 등록 유도 화면을 보여준다 (PRODUCT 9~12).
-
-function groupLabel(degree: number): { title: string; hint?: string } {
-  if (!Number.isFinite(degree)) return { title: '먼 사이' };
-  if (degree === 0) return { title: '내 카드' };
-  if (degree === 1) return { title: '1다리', hint: '직접 아는 사이' };
-  if (degree === 2) return { title: '2다리', hint: '친구의 친구' };
-  return { title: `${degree}다리` };
-}
 
 export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,7 +22,11 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const user = await requireUser(`/rooms/${id}`);
   const { room, unlocked, isOwner } = await requireRoomAccess(roomId, user.id);
 
-  // 잠긴 상태에서도 규모와 성비는 보여준다. 등록할 가치가 있는 방인지 판단할 수 있어야 한다
+  // 잠긴 상태에서도 규모와 성비는 보여준다. 등록할 가치가 있는 방인지 판단할 수 있어야 한다.
+  //
+  // 카드 수와 참여자 수는 다르다. 카드 없이 들어온 사람이 있고(주선자로만 참여),
+  // 본인이 아직 안 들어온 카드도 있다(본인 미확인). 합이 맞는 건 카드끼리라
+  // 남/여 옆에는 카드 합계를 놓고, 참여자 수는 따로 적는다.
   const stats = await queryOne<{
     members: number;
     male: number;
@@ -62,7 +59,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
 
           <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
             {[
-              ['멤버', stats?.members ?? 0],
+              ['카드', (stats?.male ?? 0) + (stats?.female ?? 0)],
               ['남성', stats?.male ?? 0],
               ['여성', stats?.female ?? 0],
             ].map(([label, value]) => (
@@ -72,6 +69,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
               </div>
             ))}
           </dl>
+          <Caption className="mt-2 text-center">참여자 {stats?.members ?? 0}명</Caption>
 
           <div className="mt-7 space-y-2.5">
             <ButtonLink href={`/rooms/${roomId}/register`}>등록하기</ButtonLink>
@@ -99,23 +97,14 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
     .map((p) => ({ ...p, degree: degreeToProfile(dist, p) }))
     .sort((a, b) => a.degree - b.degree);
 
-  const groups: { degree: number; cards: CardData[] }[] = [];
-  for (const card of cards) {
-    const last = groups.at(-1);
-    if (last && last.degree === card.degree) last.cards.push(card);
-    else groups.push({ degree: card.degree, cards: [card] });
-  }
-
-  let index = 0;
-
   return (
     <>
       <AppBar title={room.name} back="/" userId={user.id} action={manageLink} />
 
       <main className="px-6 pt-2 pb-32">
-        <div className="mb-6 flex gap-2">
+        <div className="flex gap-2">
           {[
-            ['멤버', stats?.members ?? 0],
+            ['카드', (stats?.male ?? 0) + (stats?.female ?? 0)],
             ['남성', stats?.male ?? 0],
             ['여성', stats?.female ?? 0],
           ].map(([label, value]) => (
@@ -125,6 +114,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
             </div>
           ))}
         </div>
+        <Caption className="mt-2 mb-6 text-center">참여자 {stats?.members ?? 0}명</Caption>
 
         <ButtonLink href={`/rooms/${roomId}/invite`} tone="ghost" small className="!w-full">
           초대 링크 만들기
@@ -133,38 +123,17 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
         {cards.length === 0 ? (
           <EmptyState>아직 등록된 카드가 없어요.</EmptyState>
         ) : (
-          <div className="mt-8 space-y-8">
-            {groups.map((group) => {
-              const { title, hint } = groupLabel(group.degree);
-              return (
-                <section key={group.degree}>
-                  <SectionTitle
-                    count={group.cards.length}
-                    action={hint ? <Caption>{hint}</Caption> : undefined}
-                  >
-                    {title}
-                  </SectionTitle>
-
-                  <ul className="space-y-2.5">
-                    {group.cards.map((card) => {
-                      index += 1;
-                      return (
-                        <li
-                          key={card.id}
-                          className="rise"
-                          style={{
-                            animationDelay: `${Math.min(index * 35, 280)}ms`,
-                          }}
-                        >
-                          <ProfileCard card={card} />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              );
-            })}
-          </div>
+          <ul className="mt-7 space-y-2.5">
+            {cards.map((card, i) => (
+              <li
+                key={card.id}
+                className="rise"
+                style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}
+              >
+                <ProfileCard card={card} />
+              </li>
+            ))}
+          </ul>
         )}
       </main>
 

@@ -126,13 +126,9 @@ export default async function ProfileDetailPage({
       [it.id],
     );
 
-    // 관심이 왔다고 알림을 받은 쪽에는 거둬졌다는 것도 알려야 한다.
-    // 안 그러면 사라진 요청을 계속 기다린다
-    const payload = { profileId, nickname: me.nickname };
-    await notify(it.author, 'INTEREST_CANCELED', payload);
-    if (it.subject && it.subject !== it.author) {
-      await notify(it.subject, 'INTEREST_CANCELED', payload);
-    }
+    // 거뒀다는 알림은 보내지 않는다. 관심을 받았다가 거둬졌다는 통보는
+    // 받는 쪽에 좋을 게 없다 — 조용히 사라지는 편이 낫다.
+    // 요청 자체는 상대 화면에서 없어진다.
 
     redirect(`/profiles/${profileId}?canceled=1`);
   }

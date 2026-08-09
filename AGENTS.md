@@ -195,9 +195,8 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 
 8. **초대자와 주선자는 다른 개념이다.** 초대자는 `room_member.invited_by_user_id`(방에
    데려온 사람), 주선자는 `profile.author_user_id`(카드를 쓴 사람). 자주 겹치지만 같지 않고,
    **다리 수는 두 관계를 모두 센다** (`lib/graph.ts`)
-9. **관심을 거두면 받았던 쪽에도 알린다.** 주선자와 후보자 양쪽이 관심 알림을 받았으므로,
-   취소도 양쪽에 가야 사라진 요청을 기다리지 않는다. `CANCELED`와 `EXPIRED`를 뭉뚱그리지
-   않는다 — 받는 쪽에 다른 사건이다
+9. **관심을 거둬도 알림을 보내지 않는다.** "거둬졌다"는 통보는 받는 쪽에 좋을 게 없다.
+   대신 받은 관심 목록 쿼리에서 `status <> 'CANCELED'`로 빼서 조용히 사라지게 한다
 10. **`profile.status`의 `DRAFT`/`INVITED`는 MVP에서 쓰지 않는다.** 승인 게이트를 켤 때를 위해 enum에만 있다. 지우지 말 것
 
 ## 승인 게이트 (아직 없음)

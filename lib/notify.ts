@@ -35,8 +35,6 @@ export function notificationText(
       return { title: '친구분이 카드를 내렸어요' };
     case 'INTEREST_RECEIVED':
       return { title: who ? `${who}님이 관심을 표시했어요` : '관심이 왔어요' };
-    case 'INTEREST_CANCELED':
-      return { title: who ? `${who}님이 관심을 거뒀어요` : '관심 표시가 취소됐어요' };
     case 'INTEREST_UNCLAIMED':
       return { title: '친구분이 아직 카드를 안 가져갔어요. 링크를 보내주세요' };
     case 'MATCHMAKER_COMMENT':

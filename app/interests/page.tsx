@@ -30,7 +30,7 @@ const STATUS_TEXT: Record<string, string> = {
   ACCEPTED: '수락했어요',
   DECLINED: '지금은 어려울 것 같대요',
   EXPIRED: '응답이 없어 만료됐어요',
-  CANCELED: '관심을 거뒀어요',
+  CANCELED: '거뒀어요',
   CONNECTED: '연결됐어요',
 };
 
@@ -52,6 +52,7 @@ export default async function InterestsPage() {
        JOIN \`user\` au ON au.id = p.author_user_id
       WHERE (p.subject_user_id = ? OR p.author_user_id = ?)
         AND p.deleted_at IS NULL
+        AND i.status <> 'CANCELED'
       ORDER BY FIELD(i.status,'PENDING') DESC, i.created_at DESC
       LIMIT 50`,
       [user.id, user.id, user.id],
@@ -125,12 +126,7 @@ export default async function InterestsPage() {
       [interestId],
     );
 
-    // 관심이 왔다고 알림을 받은 쪽에는 거둬졌다는 것도 알려야 한다
-    const payload = { profileId: it.profile, nickname: me.nickname };
-    await notify(it.author, 'INTEREST_CANCELED', payload);
-    if (it.subject && it.subject !== it.author) {
-      await notify(it.subject, 'INTEREST_CANCELED', payload);
-    }
+    // 거뒀다는 알림은 보내지 않는다 (카드 상세와 같은 이유)
 
     redirect('/interests');
   }
