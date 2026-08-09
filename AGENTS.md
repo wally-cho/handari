@@ -2,9 +2,9 @@
 
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+This version has breaking changes - APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+This block is written and re-added by `next dev` - verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
 
@@ -14,9 +14,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 **작업 전에 읽을 것**
 
-- `README.md` — 서비스 개요, 구조, 데이터 모델, 인프라. 리포에 커밋돼 있다
-- `PRODUCT.md` — 제품 명세. 동작이 번호 매긴 불변식으로 적혀 있다. 코드 주석의 `(PRODUCT 27)` 같은 표기는 이 번호를 가리킨다
-- `TECH.md` — 데이터 모델, 인프라, 다리 수 알고리즘의 상세
+- `README.md` - 서비스 개요, 구조, 데이터 모델, 인프라. 리포에 커밋돼 있다
+- `PRODUCT.md` - 제품 명세. 동작이 번호 매긴 불변식으로 적혀 있다. 코드 주석의 `(PRODUCT 27)` 같은 표기는 이 번호를 가리킨다
+- `TECH.md` - 데이터 모델, 인프라, 다리 수 알고리즘의 상세
 
 **`PRODUCT.md`와 `TECH.md`는 gitignore돼 있다.** 작성자 로컬에만 있는 작업 문서다. 파일이 없는 환경이라면 찾아 헤매지 말고 `README.md`와 아래 "깨뜨리면 안 되는 것"을 근거로 삼는다. 그 둘로 판단이 안 서는 동작은 임의로 만들지 말고 물어본다.
 
@@ -40,7 +40,7 @@ npm run seed:clean      # 시드 데이터만 삭제
 
 `npm run seed`는 생 SQL의 문법·컬럼 오류를 잡는 유일한 방어다. **쿼리를 고쳤으면 돌려볼 것.**
 
-**터널이 없으면 앱이 DB를 못 붙는다.** 로컬 DB는 두지 않는다 — RDS의 `handari` 데이터베이스를 개발에도 그대로 쓴다.
+**터널이 없으면 앱이 DB를 못 붙는다.** 로컬 DB는 두지 않는다 - RDS의 `handari` 데이터베이스를 개발에도 그대로 쓴다.
 
 ## 구조
 
@@ -50,7 +50,7 @@ app/            화면과 라우트 (App Router)
 lib/
   db.ts         mysql2 풀 + query/queryOne/execute/transaction
   types.ts      테이블 행 타입. 스키마의 유일한 TS 출처
-  session.ts    getCurrentUser / requireUser — 로그인 사용자 접근의 유일한 경로
+  session.ts    getCurrentUser / requireUser - 로그인 사용자 접근의 유일한 경로
   graph.ts      다리 수 BFS
   photos.ts     사진 저장 (로컬 파일 / S3)
   notify.ts     알림
@@ -83,13 +83,15 @@ const user = await requireUser();       // 로그인+온보딩 필수. 아니면
 const user = await getCurrentUser();    // 없으면 null
 ```
 
-`auth()`를 직접 부르지 않는다. 세션(JWT)에는 `uid`만 있고 나머지는 DB에서 읽는다 — JWT는 로그인 시점에 굳어서 온보딩 같은 변경이 반영되지 않기 때문이다.
+`auth()`를 직접 부르지 않는다. 세션(JWT)에는 `uid`만 있고 나머지는 DB에서 읽는다 - JWT는 로그인 시점에 굳어서 온보딩 같은 변경이 반영되지 않기 때문이다.
 
-**기본은 서버 컴포넌트다.** 폼은 Server Action으로 처리한다. `'use client'`는 정말 필요할 때만 쓴다 — 이 앱은 실시간 기능이 없어서 대부분 필요 없다.
+**기본은 서버 컴포넌트다.** 폼은 Server Action으로 처리한다. `'use client'`는 정말 필요할 때만 쓴다 - 이 앱은 실시간 기능이 없어서 대부분 필요 없다.
 
 **빌드 시점에 DB에 붙지 않는다.** 커넥션 풀은 `getPool()`로 첫 쿼리 때 만든다.
 모듈 로드 시점에 만들면 `next build`가 라우트 설정을 수집하며 파일을 평가할 때
-`DATABASE_URL`이 없어 빌드가 깨진다 — CI와 Docker 빌드에는 그 값이 없다.
+`DATABASE_URL`이 없어 빌드가 깨진다 - CI와 Docker 빌드에는 그 값이 없다.
+
+**글에 `—`(em dash)를 쓰지 않는다.** 코드 주석, 문서, 화면 문구 전부 `-`(하이픈)로 쓴다.
 
 **시각은 UTC로 저장한다.** `lib/db.ts`가 세션 타임존을 `+00:00`으로 맞춘다. SQL에서 `NOW()` 대신 `UTC_TIMESTAMP()`를 쓴다. 표시할 때만 KST로 바꾼다.
 
@@ -101,7 +103,7 @@ const user = await getCurrentUser();    // 없으면 null
 ## 디자인 시스템
 
 화면을 만들 때 **`components/ui`에서 먼저 찾는다.** 없으면 거기에 추가한다.
-페이지에 유틸리티 클래스를 직접 뿌리지 않는다 — 화면이 늘 때마다 톤이 흩어진다.
+페이지에 유틸리티 클래스를 직접 뿌리지 않는다 - 화면이 늘 때마다 톤이 흩어진다.
 
 ```tsx
 import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
@@ -116,7 +118,7 @@ import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
 | `ink` / `ink-2` / `ink-3` | 텍스트 3단. 이 이상 쪼개지 않는다 |
 | `fill` / `fill-2` | 회색 묶음. 테두리 대신 이걸로 구분한다 |
 | `haze` | 구분선 |
-| `brand` (주홍 `#FD4E43`) | **액션에만** — 버튼, 선택 상태, 안 읽은 점. 정보 표시에 쓰지 않는다 |
+| `brand` (주홍 `#FD4E43`) | **액션에만** - 버튼, 선택 상태, 안 읽은 점. 정보 표시에 쓰지 않는다 |
 | `alert` / `warn` / `good` | 상태. soft 변형과 짝으로 |
 
 **규칙**
@@ -132,7 +134,7 @@ import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
 - 프로필 선택 항목은 `lib/profileFields.ts`의 목록과 `parseExtras()`를 쓴다. 등록·수정·상세가
   같은 정의를 봐야 하고, 폼은 `<ProfileExtraFields/>` 하나로 공유한다
 - 목록 필터는 `<Tabs/>`로 링크 이동해서 서버에서 거른다. 클라이언트 상태를 만들지 않는다.
-  **탭 이동은 `replace`다** — 같은 화면의 상태 변경이라 히스토리에 쌓이면 뒤로가기가
+  **탭 이동은 `replace`다** - 같은 화면의 상태 변경이라 히스토리에 쌓이면 뒤로가기가
   필터를 거슬러 올라간다
 - 아이콘은 24×24 그리드, stroke 1.6, `currentColor` (`components/ui/icons.tsx`)
 - 한글 문단에는 `kr` 클래스를 붙인다 (단어 중간 줄바꿈 방지)
@@ -175,7 +177,7 @@ docker run --rm -v "$PWD":/w -w /w node:22-alpine npm install --package-lock-onl
 
 **빌드 시점에 DB에 붙지 않는다.** 커넥션 풀은 `getPool()`로 첫 쿼리 때 만든다. 모듈 로드
 시점에 만들면 `next build`가 라우트 설정을 수집하며 파일을 평가할 때 `DATABASE_URL`이 없어
-빌드가 깨진다 — CI와 Docker 빌드에는 그 값이 없다.
+빌드가 깨진다 - CI와 Docker 빌드에는 그 값이 없다.
 
 **`proxy.ts`의 matcher에서 정적 자산을 뺀다.** 이미지 최적화기가 `public/` 파일을 자기
 자신에게 다시 요청하는데 그 내부 요청에는 `x-origin-verify` 헤더가 없다. 막으면 이미지가
@@ -199,9 +201,9 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 
 1. **초대 링크와 카드 가져가기 링크는 1회성 + 24시간이다** (PRODUCT 7, 24). 만료 판정은 배치가 아니라 **조회 시점에** `expires_at`으로 한다
 2. **링크 사용 처리는 트랜잭션 + 영향 행 수 1 검사로 한다.** 같은 링크로 두 명이 동시에 들어오는 경쟁을 막아야 한다
 3. **`subject_user_id IS NULL` == 본인 미확인.** 별도 플래그를 만들지 않는다. 카드에 "본인 미확인" 배지가 붙는다 (PRODUCT 19)
-4. **열람 게이트** — `room_member.unlocked_at`이 NULL이면 남의 카드가 안 보인다. 등록하면 열리고, 한 번 열리면 다시 잠기지 않는다 (PRODUCT 9~11)
+4. **열람 게이트** - `room_member.unlocked_at`이 NULL이면 남의 카드가 안 보인다. 등록하면 열리고, 한 번 열리면 다시 잠기지 않는다 (PRODUCT 9~11)
 5. **소개 쉬기는 본인 선택이 주선자 선택보다 우선한다** (PRODUCT 51). 본인이 되돌린 카드를 주선자가 다시 멈출 수 없다.
-   **"품절"이라는 말을 화면에 쓰지 않는다** — 사람을 물건으로 두는 표현이다. 상태는 `쉬는 중`,
+   **"품절"이라는 말을 화면에 쓰지 않는다** - 사람을 물건으로 두는 표현이다. 상태는 `쉬는 중`,
    동작은 `소개 잠시 멈추기` / `다시 소개 시작하기`. DB의 `PAUSED`는 그대로 둔다
 6. **거절 사유는 전달하지 않는다** (PRODUCT 23, 38). 지인 관계가 걸려 있다
 7. **`UNWANTED`/`NOT_SELF` 신고는 접수 즉시 `HIDDEN`으로 바꾼다** (PRODUCT 59). 운영자를 기다리지 않는다
@@ -211,14 +213,18 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 
 9. **관심을 거둬도 알림을 보내지 않는다.** "거둬졌다"는 통보는 받는 쪽에 좋을 게 없다.
    대신 받은 관심 목록 쿼리에서 `status <> 'CANCELED'`로 빼서 조용히 사라지게 한다
 10. **`profile.status`의 `DRAFT`/`INVITED`는 MVP에서 쓰지 않는다.** 승인 게이트를 켤 때를 위해 enum에만 있다. 지우지 말 것
-11. **본인 카드의 성별·출생연도는 계정(`user`) 값이 출처다** (PRODUCT 17). 등록·수정 화면에서
+11. **`user.kakao_id`와 `user.kakaotalk_id`는 다른 값이다.** 앞은 카카오 로그인이 앱마다
+    다르게 발급하는 회원번호라 카카오톡 친구찾기에 넣을 수 없다. 운영자가 연결할 때 쓰는 건
+    뒤의 카톡 아이디이고, **선택 입력이라 비어 있을 수 있다.** 비면 닉네임으로 찾는다.
+    회원번호를 "찾을 수 있는 값"처럼 화면에 띄우지 않는다
+12. **본인 카드의 성별·출생연도는 계정(`user`) 값이 출처다** (PRODUCT 17). 등록·수정 화면에서
     묻지 않고 보여주기만 한다. `/me/edit`에서 고치면 `subject_user_id = 나`인 카드가 한
     트랜잭션에서 같이 바뀐다. 카드마다 따로 받으면 내 정보와 카드의 나이가 갈라진다.
     나이 계산과 하한(만 19세)은 `lib/age.ts` 한 곳에만 둔다
 
 ## 승인 게이트 (아직 없음)
 
-MVP에는 본인 승인 대기가 없다. 등록하면 바로 공개된다. 나중에 켤 때 필요한 건 이것뿐이다 — 마이그레이션 없음.
+MVP에는 본인 승인 대기가 없다. 등록하면 바로 공개된다. 나중에 켤 때 필요한 건 이것뿐이다 - 마이그레이션 없음.
 
 1. 등록 시 시작 상태를 `ACTIVE` → `DRAFT`로
 2. 조회 계층에 "`DRAFT`/`INVITED`는 `author_user_id` 본인에게만" 스코프 추가

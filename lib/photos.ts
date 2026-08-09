@@ -3,8 +3,8 @@ import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 // 사진 저장. 백엔드가 둘이다.
-//   개발  — 로컬 파일 (./uploads). AWS 자격증명이 필요 없다
-//   운영  — S3 (handari-uploads). EC2 인스턴스 역할로 붙는다
+//   개발  - 로컬 파일 (./uploads). AWS 자격증명이 필요 없다
+//   운영  - S3 (handari-uploads). EC2 인스턴스 역할로 붙는다
 //
 // S3_BUCKET 환경변수가 있으면 S3, 없으면 로컬이다.
 //

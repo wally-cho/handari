@@ -28,7 +28,7 @@ RESPONSE=$(curl -fsS -X POST http://127.0.0.1:3000/api/cron/daily \
   -H "x-cron-secret: $CRON_SECRET" \
   -H "x-origin-verify: $ORIGIN_VERIFY" \
   --max-time 120) || {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] 실패 — 컨테이너가 떠 있나요?"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] 실패 - 컨테이너가 떠 있나요?"
   exit 1
 }
 

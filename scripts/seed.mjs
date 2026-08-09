@@ -54,7 +54,7 @@ async function cleanup() {
     await q(`DELETE FROM notification WHERE user_id IN (${ph})`, ids);
     await q(`DELETE FROM \`user\` WHERE id IN (${ph})`, ids);
   }
-  console.log(`정리 완료 — 사용자 ${users.length}명, 방 ${roomIds.length}개`);
+  console.log(`정리 완료 - 사용자 ${users.length}명, 방 ${roomIds.length}개`);
 }
 
 if (clean) {
@@ -137,7 +137,7 @@ const pJiyoung = await addProfile(
   true,
 );
 await addProfile(taehyun, taehyun, '이태현', 1992, 'MALE', '경기', '개발자', null, true);
-// 민수가 소개한, 아직 안 가져간 카드 — "본인 미확인" 배지가 붙는다
+// 민수가 소개한, 아직 안 가져간 카드 - "본인 미확인" 배지가 붙는다
 const pSuyeon = await addProfile(
   minsu,
   null,
@@ -160,7 +160,7 @@ await q('INSERT INTO notification (user_id,type,payload) VALUES (?,?,?)', [
   JSON.stringify({ profileId: pJiyoung }),
 ]);
 
-// 방장이 만든, 아직 안 쓴 초대 링크 — 이걸로 직접 들어가볼 수 있다
+// 방장이 만든, 아직 안 쓴 초대 링크 - 이걸로 직접 들어가볼 수 있다
 const inviteToken = token();
 await q(
   'INSERT INTO room_invite (room_id,inviter_user_id,token,expires_at) VALUES (?,?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 24 HOUR))',
@@ -179,7 +179,7 @@ const check = async (label, fn) => {
   }
 };
 
-await check('홈 — 내 방 목록', () =>
+await check('홈 - 내 방 목록', () =>
   q(
     `SELECT r.*, (SELECT COUNT(*) FROM room_member m2 WHERE m2.room_id=r.id AND m2.status='ACTIVE') AS member_count
        FROM room r JOIN room_member m ON m.room_id=r.id
@@ -188,7 +188,7 @@ await check('홈 — 내 방 목록', () =>
   ),
 );
 
-await check('방 홈 — 통계', () =>
+await check('방 홈 - 통계', () =>
   q(
     `SELECT (SELECT COUNT(*) FROM room_member WHERE room_id=? AND status='ACTIVE') AS members,
             (SELECT COUNT(*) FROM profile WHERE room_id=? AND status='ACTIVE' AND gender='MALE' AND deleted_at IS NULL) AS male,
@@ -197,7 +197,7 @@ await check('방 홈 — 통계', () =>
   ),
 );
 
-await check('방 홈 — 카드 목록', () =>
+await check('방 홈 - 카드 목록', () =>
   q(
     `SELECT p.*, u.nickname AS author_nickname FROM profile p JOIN \`user\` u ON u.id=p.author_user_id
       WHERE p.room_id=? AND p.status='ACTIVE' AND p.deleted_at IS NULL ORDER BY p.updated_at DESC`,
@@ -205,7 +205,7 @@ await check('방 홈 — 카드 목록', () =>
   ),
 );
 
-await check('그래프 — 초대 엣지', () =>
+await check('그래프 - 초대 엣지', () =>
   q(
     `SELECT invited_by_user_id AS a, user_id AS b FROM room_member
       WHERE room_id=? AND status='ACTIVE' AND invited_by_user_id IS NOT NULL`,
@@ -213,7 +213,7 @@ await check('그래프 — 초대 엣지', () =>
   ),
 );
 
-await check('그래프 — 등록 엣지', () =>
+await check('그래프 - 등록 엣지', () =>
   q(
     `SELECT author_user_id AS a, subject_user_id AS b FROM profile
       WHERE room_id=? AND subject_user_id IS NOT NULL AND author_user_id<>subject_user_id
@@ -256,7 +256,7 @@ await check('가져가기 링크 조회', () =>
       WHERE p.claim_token IS NOT NULL AND p.deleted_at IS NULL LIMIT 1`),
 );
 
-await check('관심 — 받은 목록', () =>
+await check('관심 - 받은 목록', () =>
   q(
     `SELECT i.*, p.display_name AS profile_name, u.nickname AS from_nickname,
             (p.subject_user_id=?) AS is_subject, au.nickname AS matchmaker_nickname,
@@ -270,7 +270,7 @@ await check('관심 — 받은 목록', () =>
   ),
 );
 
-await check('관심 — 보낸 목록', () =>
+await check('관심 - 보낸 목록', () =>
   q(
     `SELECT i.*, p.display_name AS profile_name, p.room_id AS profile_room_id
        FROM interest i JOIN profile p ON p.id=i.to_profile_id
@@ -279,7 +279,7 @@ await check('관심 — 보낸 목록', () =>
   ),
 );
 
-await check('마이페이지 — 내 카드', () =>
+await check('마이페이지 - 내 카드', () =>
   q(
     `SELECT p.*, r.name AS room_name FROM profile p JOIN room r ON r.id=p.room_id
       WHERE p.subject_user_id=? AND p.deleted_at IS NULL AND p.status<>'DELETED' ORDER BY p.updated_at DESC`,
@@ -287,7 +287,7 @@ await check('마이페이지 — 내 카드', () =>
   ),
 );
 
-await check('마이페이지 — 내가 소개한 사람', () =>
+await check('마이페이지 - 내가 소개한 사람', () =>
   q(
     `SELECT p.*, r.name AS room_name FROM profile p JOIN room r ON r.id=p.room_id
       WHERE p.author_user_id=? AND (p.subject_user_id IS NULL OR p.subject_user_id<>?)
@@ -296,7 +296,7 @@ await check('마이페이지 — 내가 소개한 사람', () =>
   ),
 );
 
-await check('방 관리 — 멤버', () =>
+await check('방 관리 - 멤버', () =>
   q(
     `SELECT m.id AS member_id,m.user_id,u.nickname,m.role,m.joined_at,iu.nickname AS invited_by_nickname,
             (SELECT COUNT(*) FROM profile p WHERE p.room_id=m.room_id AND p.subject_user_id=m.user_id AND p.deleted_at IS NULL) AS card_count
@@ -306,23 +306,23 @@ await check('방 관리 — 멤버', () =>
   ),
 );
 
-await check('운영자 — 연결 대기열', () =>
-  q(`SELECT c.id AS connection_id,c.interest_id,c.status,c.created_at,fu.nickname AS from_nickname,fu.kakao_id AS from_kakao,
-            p.display_name AS to_name,su.nickname AS to_nickname,su.kakao_id AS to_kakao,r.name AS room_name
+await check('운영자 - 연결 대기열', () =>
+  q(`SELECT c.id AS connection_id,c.interest_id,c.status,c.created_at,fu.nickname AS from_nickname,fu.kakaotalk_id AS from_talk_id,
+            p.display_name AS to_name,su.nickname AS to_nickname,su.kakaotalk_id AS to_talk_id,r.name AS room_name
        FROM connection c JOIN interest i ON i.id=c.interest_id JOIN \`user\` fu ON fu.id=i.from_user_id
        JOIN profile p ON p.id=i.to_profile_id JOIN room r ON r.id=p.room_id
        LEFT JOIN \`user\` su ON su.id=p.subject_user_id
       ORDER BY FIELD(c.status,'PENDING') DESC, c.created_at DESC LIMIT 50`),
 );
 
-await check('운영자 — 신고', () =>
+await check('운영자 - 신고', () =>
   q(`SELECT rp.id,rp.reason,rp.detail,rp.status,rp.created_at,rp.profile_id,p.display_name,p.status AS profile_status,
             u.nickname AS reporter_nickname
        FROM report rp JOIN profile p ON p.id=rp.profile_id JOIN \`user\` u ON u.id=rp.reporter_user_id
       ORDER BY FIELD(rp.status,'OPEN') DESC, rp.created_at DESC LIMIT 50`),
 );
 
-await check('배치 — 미가져간 카드 리마인드', () =>
+await check('배치 - 미가져간 카드 리마인드', () =>
   q(`SELECT p.id,p.author_user_id FROM profile p
       WHERE p.claimed_at IS NULL AND p.deleted_at IS NULL AND p.status='ACTIVE'
         AND p.author_user_id <> COALESCE(p.subject_user_id,0)

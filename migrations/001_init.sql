@@ -7,7 +7,7 @@
 SET time_zone = '+00:00';
 
 -- ─────────────────────────────────────────────────────────────
--- user — 카카오로 로그인한 사람
+-- user - 카카오로 로그인한 사람
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `user` (
   id                      BIGINT       NOT NULL AUTO_INCREMENT,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- room — 폐쇄된 방. 방이 곧 매칭 풀이다
+-- room - 폐쇄된 방. 방이 곧 매칭 풀이다
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS room (
   id            BIGINT       NOT NULL AUTO_INCREMENT,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS room (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- room_invite — 멤버 각자가 발급하는 1회성 초대 링크 (PRODUCT 7)
+-- room_invite - 멤버 각자가 발급하는 1회성 초대 링크 (PRODUCT 7)
 --   링크 하나 = 사람 한 명. 그래야 누가 누구를 데려왔는지 남고
 --   다리 수 계산의 "초대 엣지"가 만들어진다.
 -- ─────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS room_invite (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- room_member — 방 참여. invited_by_user_id 가 "초대 엣지"
+-- room_member - 방 참여. invited_by_user_id 가 "초대 엣지"
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS room_member (
   id                 BIGINT   NOT NULL AUTO_INCREMENT,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS room_member (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- profile — 카드
+-- profile - 카드
 --   DRAFT/INVITED는 MVP에서 쓰지 않는다. 승인 게이트를 켤 때를 대비해
 --   enum에만 미리 넣어둔다 (그때 마이그레이션이 필요 없도록).
 --   subject_user_id IS NULL == "본인 미확인"
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS profile (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- interest — 관심 요청
+-- interest - 관심 요청
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS interest (
   id                 BIGINT   NOT NULL AUTO_INCREMENT,
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS interest (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- connection — 운영자 수동 중개 대기열 (PRODUCT 44)
+-- connection - 운영자 수동 중개 대기열 (PRODUCT 44)
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS connection (
   id            BIGINT   NOT NULL AUTO_INCREMENT,
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS connection (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- notification — 앱 안 알림함. 실시간 아님, 새로고침 시 갱신 (PRODUCT 54)
+-- notification - 앱 안 알림함. 실시간 아님, 새로고침 시 갱신 (PRODUCT 54)
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS notification (
   id         BIGINT      NOT NULL AUTO_INCREMENT,
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS notification (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- report — 신고. UNWANTED/NOT_SELF는 접수 즉시 HIDDEN 처리 (PRODUCT 59)
+-- report - 신고. UNWANTED/NOT_SELF는 접수 즉시 HIDDEN 처리 (PRODUCT 59)
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS report (
   id               BIGINT   NOT NULL AUTO_INCREMENT,
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS report (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ─────────────────────────────────────────────────────────────
--- schema_migration — 적용 이력. 자동 러너는 없다. 손으로 남긴다
+-- schema_migration - 적용 이력. 자동 러너는 없다. 손으로 남긴다
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS schema_migration (
   version    VARCHAR(50) NOT NULL,

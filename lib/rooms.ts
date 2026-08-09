@@ -49,7 +49,7 @@ export async function requireUnlockedRoom(roomId: number, userId: number): Promi
 
 /**
  * 열람 게이트를 연다.
- * 등록 행위 자체가 게이트를 연다 — 친구의 승인을 기다리지 않는다 (PRODUCT 10).
+ * 등록 행위 자체가 게이트를 연다 - 친구의 승인을 기다리지 않는다 (PRODUCT 10).
  * 한 번 열리면 다시 잠기지 않는다 (PRODUCT 11).
  */
 export async function unlockRoom(roomId: number, userId: number): Promise<void> {

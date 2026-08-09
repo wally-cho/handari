@@ -78,7 +78,7 @@ export interface ProfileExtras {
 
 /**
  * 폼에서 선택 항목을 뽑는다. 등록·수정 양쪽이 같은 규칙을 써야 해서 여기 둔다.
- * 전부 선택이라 빈 값은 null로 떨어뜨린다 — 검증 실패로 등록을 막지 않는다.
+ * 전부 선택이라 빈 값은 null로 떨어뜨린다 - 검증 실패로 등록을 막지 않는다.
  */
 export function parseExtras(formData: FormData): ProfileExtras {
   const str = (k: string, max: number) => {

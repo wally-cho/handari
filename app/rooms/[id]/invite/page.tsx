@@ -10,7 +10,7 @@ import CopyButton from '@/components/CopyButton';
 import { Badge, Box, Button, Caption, EmptyState, SectionTitle } from '@/components/ui';
 
 // 초대 링크는 방 멤버 누구나 각자 발급한다 (PRODUCT 7).
-// 방장만의 권한이 아니다 — 내가 부른 사람과 나 사이에 관계가 생겨야 다리 수가 계산되기 때문이다.
+// 방장만의 권한이 아니다 - 내가 부른 사람과 나 사이에 관계가 생겨야 다리 수가 계산되기 때문이다.
 //
 // 링크 하나는 한 명만 쓸 수 있고 24시간 뒤 만료된다. 재사용되면 단톡방에 뿌려지고,
 // 그러면 누가 누구를 데려왔는지 알 수 없어져 폐쇄성과 다리 수가 동시에 무너진다.

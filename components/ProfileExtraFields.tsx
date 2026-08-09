@@ -24,7 +24,7 @@ export default function ProfileExtraFields({
     | 'religion'
     | 'ideal_type'
   > | null;
-  /** 수정 화면에서는 펼쳐둔다 — 이미 채운 값을 찾아야 하니까 */
+  /** 수정 화면에서는 펼쳐둔다 - 이미 채운 값을 찾아야 하니까 */
   open?: boolean;
 }) {
   const d = defaults;

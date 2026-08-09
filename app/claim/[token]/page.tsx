@@ -69,7 +69,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
       if (taken.affectedRows !== 1) throw new Error('TAKEN');
 
       // 방 멤버가 되고, 등록해준 사람이 초대 엣지가 된다.
-      // 등록당한 쪽도 게이트를 통과한 상태로 시작한다 — 이미 카드가 하나 있으므로
+      // 등록당한 쪽도 게이트를 통과한 상태로 시작한다 - 이미 카드가 하나 있으므로
       const member = await tx.queryOne<{ id: number }>(
         'SELECT id FROM room_member WHERE room_id = ? AND user_id = ?',
         [roomId, me.id],
@@ -145,7 +145,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
             ['나이', `${age}세 (${profile.birth_year}년생)`],
             ['성별', profile.gender === 'MALE' ? '남성' : '여성'],
             ['지역', profile.region],
-            ['하는 일', profile.job ?? '—'],
+            ['하는 일', profile.job ?? '-'],
           ].map(([k, v]) => (
             <div key={k} className="flex gap-4 px-4 py-3">
               <dt className="text-ink-3 w-16 shrink-0">{k}</dt>

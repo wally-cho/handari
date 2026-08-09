@@ -33,7 +33,7 @@ assert_not_tium() {
 
 echo "════════════════════════════════════════════"
 if [ "$DRY" = "1" ]; then
-  echo " DRY RUN — 실제로 지우지 않습니다"
+  echo " DRY RUN - 실제로 지우지 않습니다"
   echo " 진짜 지우려면: $0 --yes"
 else
   echo " 한다리를 완전히 삭제합니다"

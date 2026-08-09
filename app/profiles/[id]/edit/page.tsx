@@ -58,7 +58,7 @@ export default async function EditProfilePage({
     const back = `/profiles/${profileId}/edit`;
     const displayName = String(formData.get('display_name') ?? '').trim();
     const region = String(formData.get('region') ?? '').trim();
-    // 내 카드의 나이는 여기서 안 고친다. 계정 값이 출처다 — 내 정보에서 고치면 같이 바뀐다
+    // 내 카드의 나이는 여기서 안 고친다. 계정 값이 출처다 - 내 정보에서 고치면 같이 바뀐다
     const birthYear = mine ? Number(me.birth_year) : Number(formData.get('birth_year'));
     const job = String(formData.get('job') ?? '').trim() || null;
     const selfIntro = String(formData.get('self_intro') ?? '').trim() || null;

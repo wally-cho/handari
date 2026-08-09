@@ -49,7 +49,7 @@ function withUtcSession(p: mysql.Pool): mysql.Pool {
  * 풀은 첫 쿼리 때 만든다.
  *
  * 모듈 로드 시점에 만들면 `next build`가 라우트 설정을 수집하면서 이 파일을 평가할 때
- * DATABASE_URL이 없어 빌드가 깨진다. CI와 Docker 빌드에는 그 값이 없고, 있을 이유도 없다 —
+ * DATABASE_URL이 없어 빌드가 깨진다. CI와 Docker 빌드에는 그 값이 없고, 있을 이유도 없다 -
  * 빌드는 DB에 붙지 않는다.
  */
 export function getPool(): mysql.Pool {
@@ -59,7 +59,7 @@ export function getPool(): mysql.Pool {
   return global.__handariPool;
 }
 
-/** SELECT 전용. 호출부에서 행 타입을 명시한다 — query<ProfileRow>(...) */
+/** SELECT 전용. 호출부에서 행 타입을 명시한다 - query<ProfileRow>(...) */
 export async function query<T>(sql: string, params?: SqlParam[]): Promise<T[]> {
   const [rows] = await getPool().execute<RowDataPacket[]>(sql, params);
   return rows as T[];

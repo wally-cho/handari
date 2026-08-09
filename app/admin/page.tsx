@@ -8,9 +8,13 @@ import { isAdmin } from '@/lib/admin';
 
 // 운영자 콘솔 (PRODUCT 44, 58).
 //
-// MVP에서 연결은 운영자가 수동으로 한다 — 양쪽 카톡으로 단톡방을 만들거나
-// 오픈채팅 링크를 전달하고 여기서 완료 처리한다.
-// 방 하나 규모에서만 성립하는 방식이다.
+// MVP에서 연결은 운영자가 수동으로 한다 - 양쪽 카톡으로 단톡방을 만들고
+// 여기서 완료 처리한다.
+//
+// 찾는 단서는 카톡 아이디(`kakaotalk_id`)다. 로그인이 주는 `kakao_id`는 앱마다 다르게
+// 발급되는 회원번호라 카카오톡 친구찾기에 넣을 수 없다 - 여기 띄우지 않는다.
+// 카톡 아이디는 선택 입력이라 비어 있을 수 있고, 그때는 닉네임으로 찾는다.
+// 운영자가 방 사람들을 이미 알기 때문에 성립하는 방식이고, 방이 늘면 깨진다.
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +24,10 @@ interface QueueRow {
   status: string;
   created_at: Date;
   from_nickname: string;
-  from_kakao: string;
+  from_talk_id: string | null;
   to_name: string;
   to_nickname: string | null;
-  to_kakao: string | null;
+  to_talk_id: string | null;
   room_name: string;
 }
 
@@ -46,9 +50,9 @@ export default async function AdminPage() {
   const [queue, reports] = await Promise.all([
     query<QueueRow>(
       `SELECT c.id AS connection_id, c.interest_id, c.status, c.created_at,
-            fu.nickname AS from_nickname, fu.kakao_id AS from_kakao,
+            fu.nickname AS from_nickname, fu.kakaotalk_id AS from_talk_id,
             p.display_name AS to_name,
-            su.nickname AS to_nickname, su.kakao_id AS to_kakao,
+            su.nickname AS to_nickname, su.kakaotalk_id AS to_talk_id,
             r.name AS room_name
        FROM connection c
        JOIN interest i ON i.id = c.interest_id
@@ -140,7 +144,8 @@ export default async function AdminPage() {
           연결 대기열 ({queue.filter((q) => q.status === 'PENDING').length})
         </h2>
         <p className="text-ink-3 mt-1 text-xs leading-relaxed">
-          양쪽 카톡으로 단톡방을 만들어주고 완료 처리하세요. 카카오 ID로 찾을 수 있어요.
+          카톡 아이디로 두 사람을 찾아 단톡방을 만들어주고 완료 처리하세요. 아이디는 선택 입력이라
+          비어 있을 수 있어요. 그때는 닉네임으로 찾으세요.
         </p>
 
         {queue.length === 0 ? (
@@ -156,7 +161,7 @@ export default async function AdminPage() {
                   <strong className="font-medium">{c.to_nickname ?? c.to_name}</strong>
                 </p>
                 <p className="text-ink-3 mt-1 font-mono text-[11px]">
-                  {c.from_kakao} / {c.to_kakao ?? '미가입'}
+                  {c.from_talk_id ?? '아이디 없음'} / {c.to_talk_id ?? '아이디 없음'}
                 </p>
 
                 {c.status === 'PENDING' ? (
@@ -190,7 +195,7 @@ export default async function AdminPage() {
                   <Link href={`/profiles/${r.profile_id}`} className="font-medium underline">
                     {r.display_name}
                   </Link>{' '}
-                  <span className="text-ink-3">— {r.reason}</span>
+                  <span className="text-ink-3">- {r.reason}</span>
                 </p>
                 <p className="text-ink-3 mt-1 text-xs">
                   신고: {r.reporter_nickname} · 카드 상태: {r.profile_status}

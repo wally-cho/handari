@@ -4,7 +4,7 @@ import { ageOf } from '@/lib/age';
 import { Badge, Card } from '@/components/ui';
 import type { ProfileRow } from '@/lib/types';
 
-// 카드. 추천사가 주인공이다 — 스펙보다 크게 놓는다 (PRODUCT 15).
+// 카드. 추천사가 주인공이다 - 스펙보다 크게 놓는다 (PRODUCT 15).
 // 다리 수는 목록의 섹션 머리말이 맡으므로 카드에는 넣지 않는다.
 
 export interface CardData extends ProfileRow {

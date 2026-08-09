@@ -129,7 +129,7 @@ export default async function ProfileDetailPage({
     );
 
     // 거뒀다는 알림은 보내지 않는다. 관심을 받았다가 거둬졌다는 통보는
-    // 받는 쪽에 좋을 게 없다 — 조용히 사라지는 편이 낫다.
+    // 받는 쪽에 좋을 게 없다 - 조용히 사라지는 편이 낫다.
     // 요청 자체는 상대 화면에서 없어진다.
 
     redirect(`/profiles/${profileId}?canceled=1`);
@@ -274,7 +274,7 @@ export default async function ProfileDetailPage({
               <p className="kr text-[15px] leading-[1.75] whitespace-pre-wrap">
                 {profile.recommendation}
               </p>
-              <p className="text-ink-3 mt-3 text-[13px]">— {profile.author_nickname}님이 쓴 소개</p>
+              <p className="text-ink-3 mt-3 text-[13px]">- {profile.author_nickname}님이 쓴 소개</p>
             </Box>
           )}
 
@@ -306,7 +306,7 @@ export default async function ProfileDetailPage({
 
           {/*
             남의 카드에서 할 일은 관심 하나뿐이다. 그것만 버튼으로 둔다.
-            내 카드를 손보는 동작은 아래 ActionList로 모은다 — 전폭 버튼 네 개가 쌓이면
+            내 카드를 손보는 동작은 아래 ActionList로 모은다 - 전폭 버튼 네 개가 쌓이면
             전부 같은 무게로 보여서 무엇이 이 화면의 본론인지 알 수 없다.
           */}
           {!isMine &&

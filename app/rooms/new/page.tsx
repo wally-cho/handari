@@ -33,7 +33,7 @@ export default async function NewRoomPage({
     ]);
 
     // 방을 만든 사람은 초대한 사람이 없으므로 invited_by_user_id가 NULL이다.
-    // 열람 게이트도 처음부터 통과한다 — 잠글 대상이 없다.
+    // 열람 게이트도 처음부터 통과한다 - 잠글 대상이 없다.
     await execute(
       `INSERT INTO room_member (room_id, user_id, invited_by_user_id, role, unlocked_at)
        VALUES (?, ?, NULL, 'OWNER', UTC_TIMESTAMP())`,

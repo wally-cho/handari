@@ -8,7 +8,7 @@ import Link from 'next/link';
 import type { RoomRow } from '@/lib/types';
 
 // 랜딩. 초대 링크가 없으면 여기서 막힌다 (PRODUCT 1).
-// 회원가입 버튼은 없다 — 초대 링크로만 들어올 수 있다.
+// 회원가입 버튼은 없다 - 초대 링크로만 들어올 수 있다.
 
 export default async function HomePage() {
   const user = await getCurrentUser();

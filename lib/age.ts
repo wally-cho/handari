@@ -22,7 +22,7 @@ export function latestBirthYear(): number {
   return new Date().getFullYear() - MIN_AGE;
 }
 
-/** 형식이 맞는 연도인지. 나이 하한은 따로 본다 — 안내 문구가 다르다 */
+/** 형식이 맞는 연도인지. 나이 하한은 따로 본다 - 안내 문구가 다르다 */
 export function isBirthYearShaped(birthYear: number): boolean {
   return (
     Number.isInteger(birthYear) &&
@@ -31,7 +31,7 @@ export function isBirthYearShaped(birthYear: number): boolean {
   );
 }
 
-/** 만 19세 이상인지. 연 나이로 본다 — 자기신고라 정밀도보다 명확함이 낫다 */
+/** 만 19세 이상인지. 연 나이로 본다 - 자기신고라 정밀도보다 명확함이 낫다 */
 export function isAdult(birthYear: number): boolean {
   return new Date().getFullYear() - birthYear >= MIN_AGE;
 }

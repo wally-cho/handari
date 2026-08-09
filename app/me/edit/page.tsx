@@ -2,10 +2,11 @@ import { redirect } from 'next/navigation';
 import { transaction } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { isBirthYearShaped, isAdult, latestBirthYear, OLDEST_BIRTH_YEAR } from '@/lib/age';
+import { parseKakaotalkId } from '@/lib/kakaotalk';
 import AppBar from '@/components/AppBar';
 import { Button, Caption, ChoiceGroup, Field, Input, Notice } from '@/components/ui';
 
-// 내 정보 고치기 — 이름, 출생연도, 성별.
+// 내 정보 고치기 - 이름, 출생연도, 성별, 카톡 아이디.
 //
 // 저장하면 본인 확인된 카드(subject_user_id = 나)의 나이·성별도 같이 바뀐다.
 // 계정과 카드가 같은 사람인데 두 값이 갈라지면 어느 쪽이 맞는지 알 수 없다.
@@ -39,14 +40,15 @@ export default async function EditMePage({
     if (!isAdult(birthYear)) redirect(`${back}?error=underage`);
     if (gender !== 'MALE' && gender !== 'FEMALE') redirect(`${back}?error=gender`);
 
+    // 카톡 아이디는 선택이다. 형식이 아니면 조용히 비운다
+    const kakaotalkId = parseKakaotalkId(formData.get('kakaotalk_id'));
+
     // 계정과 내 카드는 한 번에 바뀌어야 한다. 한쪽만 바뀌면 나이가 어긋난 채로 남는다
     await transaction(async (tx) => {
-      await tx.execute('UPDATE `user` SET nickname = ?, birth_year = ?, gender = ? WHERE id = ?', [
-        nickname,
-        birthYear,
-        gender,
-        me.id,
-      ]);
+      await tx.execute(
+        'UPDATE `user` SET nickname = ?, birth_year = ?, gender = ?, kakaotalk_id = ? WHERE id = ?',
+        [nickname, birthYear, gender, kakaotalkId, me.id],
+      );
       await tx.execute(
         `UPDATE profile SET birth_year = ?, gender = ?
           WHERE subject_user_id = ? AND deleted_at IS NULL`,
@@ -105,6 +107,24 @@ export default async function EditMePage({
               options={GENDERS}
               defaultValue={user.gender ?? undefined}
               required
+            />
+          </Field>
+
+          <Field
+            label="카카오톡 아이디"
+            optional
+            hint="소개가 성사되면 이 아이디로 찾아서 연결해드려요. 다른 사람에게는 보이지 않아요."
+            htmlFor="kakaotalk_id"
+          >
+            <Input
+              id="kakaotalk_id"
+              name="kakaotalk_id"
+              maxLength={50}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="handari_kim"
+              defaultValue={user.kakaotalk_id ?? ''}
             />
           </Field>
 

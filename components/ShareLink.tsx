@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 // 링크 복사 + 카카오톡으로 보낼 문구.
-// 서비스가 대신 발송하지 않는다 — 주선자가 친구 연락처를 이미 알고 있고,
+// 서비스가 대신 발송하지 않는다 - 주선자가 친구 연락처를 이미 알고 있고,
 // 우리는 연락처를 수집하지 않는다 (PRODUCT 20).
 
 export default function ShareLink({ url, message }: { url: string; message: string }) {

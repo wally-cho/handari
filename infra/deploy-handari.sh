@@ -40,7 +40,7 @@ ORIGIN_VERIFY_SECRET=$(ssm /handari/prod/ORIGIN_VERIFY_SECRET)
 EOF
 
 # 사진은 전용 버킷(handari-uploads)에 넣는다. tium 버킷을 쓰지 않는다.
-# 액세스 키를 넣지 않는다 — SDK가 EC2 인스턴스 역할을 쓴다.
+# 액세스 키를 넣지 않는다 - SDK가 EC2 인스턴스 역할을 쓴다.
 # 앱에 장기 크레덴셜을 심지 않으려는 것이다.
 cat >> "$ENV_FILE" <<'EOF2'
 S3_BUCKET=handari-uploads

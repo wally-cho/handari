@@ -18,7 +18,7 @@ export async function notify(
 
 /**
  * 알림 문구. 알림함과 배지에서 같은 문구를 쓴다.
- * payload에 이름이 있으면 넣는다 — "누가"가 빠지면 열어봐야만 알 수 있다.
+ * payload에 이름이 있으면 넣는다 - "누가"가 빠지면 열어봐야만 알 수 있다.
  */
 export function notificationText(
   type: NotificationType,

@@ -31,7 +31,10 @@ export type ReportStatus = 'OPEN' | 'RESOLVED';
 
 export interface UserRow {
   id: number;
+  /** 카카오 로그인이 주는 회원번호. 카카오톡 친구찾기에는 쓸 수 없다 */
   kakao_id: string;
+  /** 카카오톡 아이디. 선택이고, 운영자가 연결할 때 찾는 단서다 */
+  kakaotalk_id: string | null;
   nickname: string;
   kakao_profile_image_url: string | null;
   birth_year: number | null;
@@ -81,7 +84,7 @@ export interface ProfileRow {
   room_id: number;
   /** 주선자. 본인 등록이면 subject_user_id와 같다 */
   author_user_id: number;
-  /** NULL이면 "본인 미확인" — 아직 아무도 가져가지 않은 카드 */
+  /** NULL이면 "본인 미확인" - 아직 아무도 가져가지 않은 카드 */
   subject_user_id: number | null;
   status: ProfileStatus;
   display_name: string;
@@ -95,7 +98,7 @@ export interface ProfileRow {
   /** cm */
   height: number | null;
   drink_type: DrinkType | null;
-  /** 종류에 따라 단위가 다르다 — 소주 병, 맥주·소맥 잔 */
+  /** 종류에 따라 단위가 다르다 - 소주 병, 맥주·소맥 잔 */
   drink_amount: number | null;
   /** mysql2가 tinyint(1)을 boolean으로 준다 */
   smoking: boolean | null;

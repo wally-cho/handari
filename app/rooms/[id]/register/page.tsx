@@ -87,7 +87,7 @@ export default async function RegisterPage({
     const back = `/rooms/${roomId}/register?type=${isSelf ? 'self' : 'friend'}`;
 
     const displayName = String(formData.get('display_name') ?? '').trim();
-    // 본인 카드의 나이·성별은 물어보지 않는다. 계정에 있는 값이 곧 내 값이다 —
+    // 본인 카드의 나이·성별은 물어보지 않는다. 계정에 있는 값이 곧 내 값이다 -
     // 따로 받으면 내 정보와 내 카드의 나이가 갈라진다
     const gender = isSelf ? (me.gender ?? '') : String(formData.get('gender') ?? '');
     const birthYear = isSelf ? Number(me.birth_year) : Number(formData.get('birth_year'));

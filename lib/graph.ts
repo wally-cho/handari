@@ -3,8 +3,8 @@ import { query } from '@/lib/db';
 // 다리 수 계산 (PRODUCT 27~33).
 //
 // 방 안의 관계 엣지는 두 종류다. 둘 다 무방향으로 본다.
-//   1. 초대 엣지 — room_member.invited_by_user_id ↔ user_id
-//   2. 등록 엣지 — profile.author_user_id ↔ profile.subject_user_id (가져간 카드만)
+//   1. 초대 엣지 - room_member.invited_by_user_id ↔ user_id
+//   2. 등록 엣지 - profile.author_user_id ↔ profile.subject_user_id (가져간 카드만)
 //
 // SQL 재귀 CTE를 쓰지 않는다. 방 하나의 엣지를 전부 읽어 메모리에서 BFS를 돌린다.
 // 방이 수백 명이면 엣지도 수백 개라 쿼리 한 번 + O(V+E) 순회로 끝나고,
@@ -85,7 +85,7 @@ export async function distancesFrom(roomId: number, meUserId: number): Promise<D
  * 카드까지의 다리 수.
  *
  * 아직 아무도 가져가지 않은 카드는 대응하는 user 노드가 없다.
- * 이때는 주선자를 경유해서 센다 — 주선자까지의 거리 + 1.
+ * 이때는 주선자를 경유해서 센다 - 주선자까지의 거리 + 1.
  * 내가 등록한 미확인 카드는 dist(me,me)+1 = 1다리가 되어 의도대로 나온다.
  */
 export function degreeToProfile(
