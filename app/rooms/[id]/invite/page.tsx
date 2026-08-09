@@ -6,7 +6,8 @@ import { newToken, linkExpiry, isExpired, remainingText } from '@/lib/tokens';
 import { baseUrl } from '@/lib/url';
 import AppBar from '@/components/AppBar';
 import ShareLink from '@/components/ShareLink';
-import { Badge, Box, Button, Caption, EmptyState, ListRow, SectionTitle } from '@/components/ui';
+import CopyButton from '@/components/CopyButton';
+import { Badge, Box, Button, Caption, EmptyState, SectionTitle } from '@/components/ui';
 
 // 초대 링크는 방 멤버 누구나 각자 발급한다 (PRODUCT 7).
 // 방장만의 권한이 아니다 — 내가 부른 사람과 나 사이에 관계가 생겨야 다리 수가 계산되기 때문이다.
@@ -85,32 +86,27 @@ export default async function InvitePage({
 
       <main className="px-6 pt-2 pb-16">
         {active && (
-          <section className="mb-8">
-            <Box tone="brand">
-              <p className="text-[15px] font-bold">링크가 만들어졌어요</p>
-              <Caption className="mt-1">
-                한 명만 쓸 수 있어요 · {remainingText(active.expires_at)}
-              </Caption>
-              <div className="mt-4">
-                <ShareLink
-                  url={`${base}/join/${active.token}`}
-                  message={
-                    `"${room.name}" 방으로 초대할게. 한다리라는 데야.\n` +
-                    `아는 사람 건너 아는 사람만 있는 곳이라 편해.\n\n` +
-                    `이 링크는 너 한 명만 쓸 수 있고 24시간 뒤에 만료돼.\n${base}/join/${active.token}`
-                  }
-                />
-              </div>
-            </Box>
-          </section>
+          <Box tone="brand" className="mb-7">
+            <p className="text-[15px] font-bold">
+              링크를 만들었어요 · {remainingText(active.expires_at)}
+            </p>
+            <div className="mt-4">
+              <ShareLink
+                url={`${base}/join/${active.token}`}
+                message={
+                  `"${room.name}" 방에 초대할게. 한다리라는 데야.\n` +
+                  `${base}/join/${active.token}\n\n` +
+                  `너 한 명만 쓸 수 있고 24시간 뒤에 만료돼.`
+                }
+              />
+            </div>
+          </Box>
         )}
 
         <form action={issue}>
           <Button type="submit">초대 링크 만들기</Button>
         </form>
-        <Caption className="mt-2.5 text-center">
-          한 명당 하나씩 만들어주세요. 여러 명을 부르려면 여러 번 눌러요.
-        </Caption>
+        <Caption className="mt-2.5 text-center">한 명당 하나씩 만들어주세요</Caption>
 
         <div className="mt-10">
           <SectionTitle count={invites.length}>내가 만든 링크</SectionTitle>
@@ -125,37 +121,35 @@ export default async function InvitePage({
                 const alive = !invite.used_at && !revoked && !expired;
 
                 return (
-                  <li key={invite.id}>
-                    <ListRow
-                      title={
-                        <span className="mark text-ink-3 font-mono text-[13px] font-normal">
-                          …{invite.token.slice(-8)}
-                        </span>
-                      }
-                      sub={
-                        invite.used_at
-                          ? `${invite.used_by_nickname ?? '누군가'}님이 사용했어요`
+                  <li key={invite.id} className="flex items-center gap-2 py-3.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-mono text-[13px]">…{invite.token.slice(-8)}</p>
+                      <p className="text-ink-3 mt-0.5 text-[13px]">
+                        {invite.used_at
+                          ? `${invite.used_by_nickname ?? '누군가'}님이 사용`
                           : revoked
-                            ? '직접 만료시켰어요'
+                            ? '만료시킴'
                             : expired
-                              ? '시간이 지나 만료됐어요'
-                              : remainingText(invite.expires_at)
-                      }
-                      right={
-                        invite.used_at ? (
-                          <Badge tone="good">사용됨</Badge>
-                        ) : alive ? (
-                          <form action={revoke}>
-                            <input type="hidden" name="invite_id" value={invite.id} />
-                            <Button type="submit" tone="ghost" small>
-                              만료시키기
-                            </Button>
-                          </form>
-                        ) : (
-                          <Badge>만료</Badge>
-                        )
-                      }
-                    />
+                              ? '기간 만료'
+                              : remainingText(invite.expires_at)}
+                      </p>
+                    </div>
+
+                    {invite.used_at ? (
+                      <Badge tone="good">사용됨</Badge>
+                    ) : alive ? (
+                      <>
+                        <CopyButton value={`${base}/join/${invite.token}`} />
+                        <form action={revoke}>
+                          <input type="hidden" name="invite_id" value={invite.id} />
+                          <Button type="submit" tone="ghost" small>
+                            만료
+                          </Button>
+                        </form>
+                      </>
+                    ) : (
+                      <Badge>만료</Badge>
+                    )}
                   </li>
                 );
               })}
@@ -164,8 +158,7 @@ export default async function InvitePage({
         </div>
 
         <Caption className="mt-8">
-          잘못 보냈거나 더 이상 필요 없으면 만료시켜 주세요. 만료한 링크는 되살릴 수 없고, 새로
-          만들면 돼요.
+          링크 하나에 한 명만 들어올 수 있어요. 잘못 보냈으면 만료시키고 새로 만드세요.
         </Caption>
       </main>
     </>
