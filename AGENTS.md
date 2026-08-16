@@ -40,6 +40,13 @@ npm run seed:clean      # 시드 데이터만 삭제
 
 `npm run seed`는 생 SQL의 문법·컬럼 오류를 잡는 유일한 방어다. **쿼리를 고쳤으면 돌려볼 것.**
 
+두 가지를 같이 지킨다.
+
+- **`scripts/seed.mjs`는 페이지 쿼리를 복사해서 검사한다.** 화면의 쿼리를 고치면 seed의 사본도
+  고친다. 안 그러면 유일한 방어가 헛것을 검사한다 (실제로 어드민 쿼리에서 이 일이 났다)
+- **끝나면 `npm run seed:clean`.** 개발과 운영이 같은 `handari` 데이터베이스를 쓴다.
+  시드 방과 카드가 남으면 서비스에 그대로 보인다
+
 **터널이 없으면 앱이 DB를 못 붙는다.** 로컬 DB는 두지 않는다 - RDS의 `handari` 데이터베이스를 개발에도 그대로 쓴다.
 
 ## 구조
@@ -52,6 +59,9 @@ lib/
   types.ts      테이블 행 타입. 스키마의 유일한 TS 출처
   session.ts    getCurrentUser / requireUser - 로그인 사용자 접근의 유일한 경로
   graph.ts      다리 수 BFS
+  age.ts        나이 계산·만 19세 하한. 유일한 출처
+  kakaotalk.ts  카톡 아이디 형식 검사
+  profileFields.ts  프로필 선택지 + 폼 파서
   photos.ts     사진 저장 (로컬 파일 / S3)
   notify.ts     알림
   tokens.ts     링크 토큰·만료

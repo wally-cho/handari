@@ -35,6 +35,10 @@ npm run build
 
 ORM이 없어서 SQL 오류는 실행해봐야만 잡힙니다. **쿼리를 고쳤으면 `npm run seed`를 돌려주세요.** 이게 사실상의 테스트입니다.
 
+> **끝나면 `npm run seed:clean`을 돌려주세요.** 개발과 운영이 같은 `handari` 데이터베이스를 씁니다. 시드 방과 카드가 그대로 남으면 서비스에 보입니다.
+>
+> `scripts/seed.mjs`는 페이지 쿼리를 **복사해서** 검사합니다. 화면의 쿼리를 고치면 seed의 사본도 같이 고쳐야 합니다. 안 그러면 컬럼 오타를 잡아줄 유일한 방어가 헛것을 검사합니다.
+
 ## 디자인 시스템
 
 토스 계열. 흰 바탕, 회색 필(fill)로 묶고, **주홍 `#FD4E43`은 액션에만** 씁니다. 브랜드 컬러는 로고에서 뽑았습니다.
@@ -44,10 +48,16 @@ ORM이 없어서 SQL 오류는 실행해봐야만 잡힙니다. **쿼리를 고�
 ```tsx
 import { Button, ButtonLink, Field, Input, Select, Textarea, ChoiceGroup,
          Card, Box, PageTitle, SectionTitle, Caption, Badge, ListRow,
-         EmptyState, Notice, Bell } from '@/components/ui';
+         ActionList, ActionRow, Tabs, EmptyState, Notice, Bell } from '@/components/ui';
 ```
 
-색은 `app/globals.css`의 토큰만 씁니다. 텍스트는 `ink` / `ink-2` / `ink-3` 3단, 상태는 `alert` / `warn` / `good`. 자세한 규칙은 [AGENTS.md](./AGENTS.md).
+색은 `app/globals.css`의 토큰만 씁니다. 텍스트는 `ink` / `ink-2` / `ink-3` 3단, 상태는 `alert` / `warn` / `good`.
+
+**전폭 버튼을 세 개 이상 쌓지 않습니다.** 전부 같은 무게로 보여서 무엇이 본론인지 알 수 없습니다. 화면의 주된 행동만 `<Button/>`으로 두고, 내 것을 손보는 동작(고치기·멈추기·삭제)은 `<ActionList/>` + `<ActionRow/>`로 묶습니다.
+
+**글에 `—`(em dash)를 쓰지 않습니다.** 코드 주석, 문서, 화면 문구 전부 `-`(하이픈)입니다.
+
+자세한 규칙은 [AGENTS.md](./AGENTS.md).
 
 브랜드 자산은 리포에 둡니다. S3는 사용자가 올린 사진 전용입니다.
 
@@ -68,6 +78,9 @@ lib/
   types.ts        테이블 행 타입. 스키마의 유일한 TS 출처
   session.ts      getCurrentUser / requireUser
   graph.ts        다리 수 BFS
+  age.ts          나이 계산과 만 19세 하한. 유일한 출처
+  kakaotalk.ts    카톡 아이디 형식 검사
+  profileFields.ts 프로필 선택지 목록 + 폼 파서
   photos.ts       사진 저장 (로컬 파일 / S3 두 백엔드)
   notify.ts       알림
 components/
@@ -88,7 +101,7 @@ proxy.ts          CloudFront 오리진 검증
 
 | 테이블 | 역할 |
 |---|---|
-| `user` | 카카오로 로그인한 사람 |
+| `user` | 카카오로 로그인한 사람. `kakao_id`(회원번호)와 `kakaotalk_id`(카톡 아이디, 선택)는 다른 값 |
 | `room` | 폐쇄된 방. 방이 곧 매칭 풀 |
 | `room_invite` | 멤버 각자가 발급하는 1회성 초대 링크 (24시간) |
 | `room_member` | 방 참여. `invited_by_user_id`가 관계 그래프의 절반 |
