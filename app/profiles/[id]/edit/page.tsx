@@ -3,7 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { execute, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { requireRoomAccess } from '@/lib/rooms';
-import { savePhoto, deletePhoto, photoUrl, PhotoError } from '@/lib/photos';
+import { deletePhoto, photoUrl, PhotoError } from '@/lib/photos';
+import { MAX_PHOTOS, photoKeysOf, savePhotos, setExtraPhotos } from '@/lib/profilePhotos';
 import AppBar from '@/components/AppBar';
 import ProfileExtraFields from '@/components/ProfileExtraFields';
 import { REGIONS, parseExtras } from '@/lib/profileFields';
@@ -63,8 +64,8 @@ export default async function EditProfilePage({
     const job = String(formData.get('job') ?? '').trim() || null;
     const selfIntro = String(formData.get('self_intro') ?? '').trim() || null;
     const recommendation = String(formData.get('recommendation') ?? '').trim();
-    const removePhoto = formData.get('remove_photo') === 'on';
-    const photo = formData.get('photo');
+    const removeKeys = formData.getAll('remove_photo').map(String);
+    const photoFiles = formData.getAll('photos');
     const extras = parseExtras(formData);
 
     if (!displayName || displayName.length > 50) redirect(`${back}?error=name`);
@@ -74,24 +75,20 @@ export default async function EditProfilePage({
       redirect(`${back}?error=recommendation`);
     }
 
-    let photoKey = p.photo_key;
+    // 지울 것을 빼고, 새로 올린 것을 뒤에 붙인다. 순서가 곧 보여주는 순서고 첫 장이 대표다
+    const current = await photoKeysOf(profileId, p.photo_key);
+    const kept = current.filter((k) => !removeKeys.includes(k));
 
-    if (removePhoto && p.photo_key) {
-      await deletePhoto(p.photo_key);
-      photoKey = null;
+    let added: string[] = [];
+    try {
+      added = await savePhotos(photoFiles, MAX_PHOTOS - kept.length);
+    } catch (e) {
+      if (e instanceof PhotoError) redirect(`${back}?error=photo`);
+      throw e;
     }
 
-    if (photo instanceof File && photo.size > 0) {
-      try {
-        const next = await savePhoto(photo);
-        // 교체 시 이전 객체를 반드시 지운다. 안 지우면 내려간 사진이 스토리지에 남는다
-        if (photoKey) await deletePhoto(photoKey);
-        photoKey = next;
-      } catch (e) {
-        if (e instanceof PhotoError) redirect(`${back}?error=photo`);
-        throw e;
-      }
-    }
+    const nextKeys = [...kept, ...added];
+    const photoKey = nextKeys[0] ?? null;
 
     await execute(
       `UPDATE profile
@@ -122,10 +119,14 @@ export default async function EditProfilePage({
       ],
     );
 
+    await setExtraPhotos(profileId, nextKeys.slice(1));
+    // 목록에서 빠진 사진은 스토리지에서도 지운다. 안 지우면 내려간 사진이 계속 남는다
+    for (const gone of current.filter((k) => !nextKeys.includes(k))) await deletePhoto(gone);
+
     redirect(`/profiles/${profileId}`);
   }
 
-  const currentPhoto = photoUrl(profile.photo_key);
+  const currentPhotos = await photoKeysOf(profileId, profile.photo_key);
   const errorText: Record<string, string> = {
     name: '이름을 확인해주세요.',
     birth_year: '만 19세 이상만 등록할 수 있어요.',
@@ -262,25 +263,45 @@ export default async function EditProfilePage({
           )}
 
           <div>
-            <span className="block text-sm font-medium">사진</span>
-            {currentPhoto && (
-              <div className="mt-2 flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={currentPhoto} alt="" className="h-20 w-20 rounded-xl object-cover" />
-                <label className="text-ink-2 flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="remove_photo" className="accent-brand" />
-                  지우기
-                </label>
-              </div>
+            <span className="block text-sm font-medium">
+              사진 <span className="text-ink-3">(최대 {MAX_PHOTOS}장)</span>
+            </span>
+
+            {currentPhotos.length > 0 && (
+              <ul className="mt-2 flex flex-wrap gap-3">
+                {currentPhotos.map((key, i) => (
+                  <li key={key}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photoUrl(key)!}
+                      alt=""
+                      className="h-20 w-20 rounded-xl object-cover"
+                    />
+                    <label className="text-ink-2 mt-1.5 flex items-center gap-1.5 text-xs">
+                      <input
+                        type="checkbox"
+                        name="remove_photo"
+                        value={key}
+                        className="accent-brand"
+                      />
+                      {i === 0 ? '대표 지우기' : '지우기'}
+                    </label>
+                  </li>
+                ))}
+              </ul>
             )}
+
             <input
-              id="photo"
-              name="photo"
+              id="photos"
+              name="photos"
               type="file"
+              multiple
               accept="image/jpeg,image/png,image/webp"
               className="text-ink-2 file:bg-haze mt-3 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-sm"
             />
-            <p className="text-ink-3 mt-1 text-xs">새로 올리면 기존 사진은 지워져요.</p>
+            <p className="text-ink-3 mt-1 text-xs">
+              새로 올린 사진은 뒤에 붙어요. 남은 사진 중 첫 장이 대표 사진이 돼요.
+            </p>
           </div>
 
           <ProfileExtraFields defaults={profile} open />

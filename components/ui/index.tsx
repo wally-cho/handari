@@ -13,6 +13,7 @@ import { ChevronRight } from './icons';
 //   - 텍스트 위계는 3단을 넘기지 않는다
 
 export * from './icons';
+export { default as PhotoCarousel } from './PhotoCarousel';
 
 /* ────────────────────────────────────────────────
    Button - 화면당 primary는 하나만 둔다

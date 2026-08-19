@@ -105,7 +105,8 @@ proxy.ts          CloudFront 오리진 검증
 | `room` | 폐쇄된 방. 방이 곧 매칭 풀 |
 | `room_invite` | 멤버 각자가 발급하는 1회성 초대 링크 (24시간) |
 | `room_member` | 방 참여. `invited_by_user_id`가 관계 그래프의 절반 |
-| `profile` | 카드. `subject_user_id`가 NULL이면 "본인 미확인" |
+| `profile` | 카드. `subject_user_id`가 NULL이면 "본인 미확인". `photo_key`는 대표 사진(첫 장) |
+| `profile_photo` | 두 번째 이후의 사진. 카드당 최대 6장, `sort_order`가 보여주는 순서 |
 | `interest` | 관심 요청 (7일 만료) |
 | `connection` | 운영자 수동 중개 대기열 |
 | `notification` | 앱 안 알림함 (90일 보관) |

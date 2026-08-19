@@ -231,6 +231,10 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY   # 인스턴스 역할을 쓰게 
     묻지 않고 보여주기만 한다. `/me/edit`에서 고치면 `subject_user_id = 나`인 카드가 한
     트랜잭션에서 같이 바뀐다. 카드마다 따로 받으면 내 정보와 카드의 나이가 갈라진다.
     나이 계산과 하한(만 19세)은 `lib/age.ts` 한 곳에만 둔다
+13. **사진은 여러 장이고, 대표 한 장과 나머지가 다른 곳에 있다** (PRODUCT 19). 대표(첫 장)는
+    `profile.photo_key`, 두 번째 이후는 `profile_photo`다. 같은 키를 두 곳에 두지 않는다 -
+    목록 카드는 대표 한 장만 쓰고, 붙여 읽는 곳은 `lib/profilePhotos.ts` 하나뿐이다.
+    `/api/photos`의 권한 조회도 두 곳을 다 봐야 한다. 카드당 최대 6장
 
 ## 승인 게이트 (아직 없음)
 

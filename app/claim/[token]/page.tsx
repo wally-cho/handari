@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation';
 import { execute, queryOne, transaction } from '@/lib/db';
 import { getCurrentUser, isOnboarded } from '@/lib/session';
 import { isExpired } from '@/lib/tokens';
-import { deletePhoto, photoUrl } from '@/lib/photos';
+import { photoUrl } from '@/lib/photos';
+import { deleteAllPhotos, photoKeysOf } from '@/lib/profilePhotos';
+import { PhotoCarousel } from '@/components/ui';
 import { notify } from '@/lib/notify';
 import { ageOf } from '@/lib/age';
 import type { ProfileRow } from '@/lib/types';
@@ -102,7 +104,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
     );
     if (!target) redirect(`/claim/${token}`);
 
-    await deletePhoto(target.photo_key);
+    await deleteAllPhotos(target.id, target.photo_key);
     await execute(
       `UPDATE profile
           SET status='DELETED', deleted_at = UTC_TIMESTAMP(),
@@ -122,7 +124,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
     redirect('/claim/dropped');
   }
 
-  const photo = photoUrl(profile.photo_key);
+  const photos = (await photoKeysOf(profile.id, profile.photo_key)).map((k) => photoUrl(k)!);
   const age = ageOf(profile.birth_year);
 
   return (
@@ -135,10 +137,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
       </p>
 
       <section className="ring-haze mt-6 overflow-hidden rounded-2xl ring-1">
-        {photo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" className="h-48 w-full object-cover" />
-        )}
+        {photos.length > 0 && <PhotoCarousel srcs={photos} className="h-48 w-full" />}
         <dl className="divide-haze divide-y text-sm">
           {[
             ['이름', profile.display_name],

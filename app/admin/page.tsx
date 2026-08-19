@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { execute, query } from '@/lib/db';
+import { execute, query, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { notify } from '@/lib/notify';
+import { deleteAllPhotos } from '@/lib/profilePhotos';
 import AppBar from '@/components/AppBar';
 import { isAdmin } from '@/lib/admin';
 
@@ -123,6 +124,12 @@ export default async function AdminPage() {
     const profileId = Number(formData.get('profile_id'));
 
     if (action === 'delete') {
+      // 사진은 여러 장이다. 행만 지우면 스토리지에 그대로 남는다
+      const target = await queryOne<{ photo_key: string | null }>(
+        'SELECT photo_key FROM profile WHERE id = ?',
+        [profileId],
+      );
+      await deleteAllPhotos(profileId, target?.photo_key ?? null);
       await execute(
         "UPDATE profile SET status='DELETED', deleted_at=UTC_TIMESTAMP(), photo_key=NULL WHERE id = ?",
         [profileId],

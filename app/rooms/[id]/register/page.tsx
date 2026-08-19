@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { execute, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { requireRoomAccess, unlockRoom } from '@/lib/rooms';
-import { savePhoto, PhotoError } from '@/lib/photos';
+import { PhotoError } from '@/lib/photos';
+import { MAX_PHOTOS, savePhotos, setExtraPhotos } from '@/lib/profilePhotos';
 import { newToken, linkExpiry } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
 import ProfileExtraFields from '@/components/ProfileExtraFields';
@@ -95,8 +96,7 @@ export default async function RegisterPage({
     const job = String(formData.get('job') ?? '').trim() || null;
     const recommendation = String(formData.get('recommendation') ?? '').trim();
     const selfIntro = String(formData.get('self_intro') ?? '').trim() || null;
-    const consent = formData.get('consent') === 'on';
-    const photo = formData.get('photo');
+    const photoFiles = formData.getAll('photos');
     const extras = parseExtras(formData);
 
     if (!displayName || displayName.length > 50) redirect(`${back}&error=name`);
@@ -107,18 +107,15 @@ export default async function RegisterPage({
     if (!isSelf) {
       // 추천사가 카드의 주인공이다 (PRODUCT 15)
       if (recommendation.length < 20) redirect(`${back}&error=recommendation`);
-      // 친구에게 먼저 이야기했는지 확인받는다 (PRODUCT 17)
-      if (!consent) redirect(`${back}&error=consent`);
     }
 
-    let photoKey: string | null = null;
-    if (photo instanceof File && photo.size > 0) {
-      try {
-        photoKey = await savePhoto(photo);
-      } catch (e) {
-        if (e instanceof PhotoError) redirect(`${back}&error=photo`);
-        throw e;
-      }
+    // 첫 장이 대표 사진(profile.photo_key)이 되고 나머지는 profile_photo로 간다
+    let photoKeys: string[] = [];
+    try {
+      photoKeys = await savePhotos(photoFiles, MAX_PHOTOS);
+    } catch (e) {
+      if (e instanceof PhotoError) redirect(`${back}&error=photo`);
+      throw e;
     }
 
     const claimToken = isSelf ? null : newToken();
@@ -143,7 +140,7 @@ export default async function RegisterPage({
         job,
         isSelf ? null : recommendation,
         isSelf ? selfIntro : null,
-        photoKey,
+        photoKeys[0] ?? null,
         isSelf ? 'SELF' : 'OFFLINE_CONFIRMED',
         isSelf ? null : new Date(),
         claimToken,
@@ -160,6 +157,8 @@ export default async function RegisterPage({
       ],
     );
 
+    if (photoKeys.length > 1) await setExtraPhotos(res.insertId, photoKeys.slice(1));
+
     // 등록 행위 자체가 게이트를 연다. 친구의 확인을 기다리지 않는다 (PRODUCT 10)
     await unlockRoom(roomId, me.id);
 
@@ -173,7 +172,6 @@ export default async function RegisterPage({
     birth_year: '만 19세 이상만 등록할 수 있어요.',
     region: '지역을 선택해주세요.',
     recommendation: '추천사를 20자 이상 써주세요.',
-    consent: '친구에게 먼저 이야기했는지 확인해주세요.',
     photo: '사진은 JPG·PNG·WEBP, 2MB까지 올릴 수 있어요.',
   };
 
@@ -322,33 +320,29 @@ export default async function RegisterPage({
           )}
 
           <div>
-            <label htmlFor="photo" className="block text-sm font-medium">
-              사진 <span className="text-ink-3">(선택, 2MB까지)</span>
+            <label htmlFor="photos" className="block text-sm font-medium">
+              사진 <span className="text-ink-3">(선택, {MAX_PHOTOS}장까지, 장당 2MB)</span>
             </label>
             <input
-              id="photo"
-              name="photo"
+              id="photos"
+              name="photos"
               type="file"
+              multiple
               accept="image/jpeg,image/png,image/webp"
               className="text-ink-2 file:bg-haze mt-2 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-sm"
             />
+            <p className="text-ink-3 mt-1 text-xs">
+              고른 순서대로 보여요. 첫 장이 대표 사진이에요.
+            </p>
           </div>
 
           <ProfileExtraFields />
 
           {!isSelf && (
-            <label className="bg-warn-soft flex gap-3 rounded-xl p-4">
-              <input
-                type="checkbox"
-                name="consent"
-                required
-                className="accent-brand mt-0.5 h-4 w-4 shrink-0"
-              />
-              <span className="text-warn text-sm leading-relaxed">
-                이 친구에게 등록한다고 이야기했어요. 등록하면 바로 방에 공개되고, 친구가 링크로
-                들어와 직접 고치거나 내릴 수 있어요.
-              </span>
-            </label>
+            <p className="bg-warn-soft text-warn kr rounded-xl p-4 text-sm leading-relaxed">
+              친구에게 등록한다고 미리 이야기해주세요. 등록하면 바로 방에 공개되고, 친구가 링크로
+              들어와 직접 고치거나 내릴 수 있어요.
+            </p>
           )}
 
           <button type="submit" className="btn btn-primary">

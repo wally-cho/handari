@@ -43,6 +43,10 @@ async function cleanup() {
       `DELETE r FROM report r JOIN profile p ON p.id=r.profile_id WHERE p.room_id IN (${ph})`,
       roomIds,
     );
+    await q(
+      `DELETE pp FROM profile_photo pp JOIN profile p ON p.id=pp.profile_id WHERE p.room_id IN (${ph})`,
+      roomIds,
+    );
     await q(`DELETE FROM profile WHERE room_id IN (${ph})`, roomIds);
     await q(`DELETE FROM room_invite WHERE room_id IN (${ph})`, roomIds);
     await q(`DELETE FROM room_member WHERE room_id IN (${ph})`, roomIds);
@@ -331,11 +335,31 @@ await check('배치 - 미가져간 카드 리마인드', () =>
                           AND n.type='CLAIM_REMINDER' AND JSON_EXTRACT(n.payload,'$.profileId')=p.id)`),
 );
 
-await check('사진 권한 조회', () =>
-  q('SELECT room_id,status FROM profile WHERE photo_key=? AND deleted_at IS NULL', [
-    'profiles/none.jpg',
-  ]),
+await check('사진 권한 조회 - 대표 + 추가 사진', () =>
+  q(
+    `SELECT room_id,status FROM profile WHERE photo_key=? AND deleted_at IS NULL
+     UNION ALL
+     SELECT p.room_id,p.status FROM profile_photo pp JOIN profile p ON p.id=pp.profile_id
+      WHERE pp.photo_key=? AND p.deleted_at IS NULL
+     LIMIT 1`,
+    ['profiles/none.jpg', 'profiles/none.jpg'],
+  ),
 );
+
+// 사진 여러 장 (migrations/007). 실제 파일은 없으니 쿼리만 확인하고 지운다 -
+// 남기면 시드 카드에 깨진 이미지가 뜬다
+await check('카드 사진 추가·목록', async () => {
+  await q('INSERT INTO profile_photo (profile_id,photo_key,sort_order) VALUES (?,?,?)', [
+    pSuyeon,
+    'profiles/seed-2.jpg',
+    1,
+  ]);
+  const rows = await q('SELECT * FROM profile_photo WHERE profile_id=? ORDER BY sort_order, id', [
+    pSuyeon,
+  ]);
+  await q('DELETE FROM profile_photo WHERE profile_id=?', [pSuyeon]);
+  return rows;
+});
 
 // ── 결과 ──────────────────────────────────────────────
 const failed = checks.filter(([ok]) => !ok);

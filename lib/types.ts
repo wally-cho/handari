@@ -107,6 +107,7 @@ export interface ProfileRow {
   /** 주선자 추천사. 카드의 주인공 (PRODUCT 15) */
   recommendation: string | null;
   self_intro: string | null;
+  /** 대표 사진(첫 장). 두 번째 이후는 profile_photo에 있다 */
   photo_key: string | null;
   consent_type: ConsentType;
   consent_confirmed_at: Date | null;
@@ -119,6 +120,16 @@ export interface ProfileRow {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
+}
+
+/** 두 번째 이후의 사진. 대표 사진은 profile.photo_key다 */
+export interface ProfilePhotoRow {
+  id: number;
+  profile_id: number;
+  photo_key: string;
+  /** 1부터. 0은 대표 사진의 자리다 */
+  sort_order: number;
+  created_at: Date;
 }
 
 export interface InterestRow {

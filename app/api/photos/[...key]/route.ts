@@ -15,10 +15,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   const { key: segments } = await params;
   const key = segments.join('/');
 
-  // 이 사진이 붙은 카드를 찾아 볼 자격이 있는지 본다
+  // 이 사진이 붙은 카드를 찾아 볼 자격이 있는지 본다.
+  // 대표 사진은 profile.photo_key, 두 번째 이후는 profile_photo에 있다 (migrations/007)
   const owner = await queryOne<{ room_id: number; status: string }>(
-    'SELECT room_id, status FROM profile WHERE photo_key = ? AND deleted_at IS NULL',
-    [key],
+    `SELECT room_id, status FROM profile WHERE photo_key = ? AND deleted_at IS NULL
+     UNION ALL
+     SELECT p.room_id, p.status
+       FROM profile_photo pp JOIN profile p ON p.id = pp.profile_id
+      WHERE pp.photo_key = ? AND p.deleted_at IS NULL
+     LIMIT 1`,
+    [key, key],
   );
   if (!owner) return new NextResponse('Not Found', { status: 404 });
   if (owner.status === 'HIDDEN' || owner.status === 'DELETED') {

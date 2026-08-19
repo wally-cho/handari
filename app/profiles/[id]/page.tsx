@@ -4,13 +4,23 @@ import { execute, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { requireRoomAccess } from '@/lib/rooms';
 import { distancesFrom, degreeToProfile, degreeLabel } from '@/lib/graph';
-import { photoUrl, deletePhoto } from '@/lib/photos';
+import { photoUrl } from '@/lib/photos';
+import { deleteAllPhotos, photoKeysOf } from '@/lib/profilePhotos';
 import { notify } from '@/lib/notify';
 import { daysFromNow, INTEREST_TTL_DAYS } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
 import { drinkText, religionText, smokingText } from '@/lib/profileFields';
 import { ageOf } from '@/lib/age';
-import { ActionList, ActionRow, Badge, Box, Button, Caption, Notice } from '@/components/ui';
+import {
+  ActionList,
+  ActionRow,
+  Badge,
+  Box,
+  Button,
+  Caption,
+  Notice,
+  PhotoCarousel,
+} from '@/components/ui';
 import type { ProfileRow, InterestRow } from '@/lib/types';
 
 // 카드 상세. 관심 표시, 소개 멈춤/재개, 신고, 삭제가 여기 모인다.
@@ -182,7 +192,7 @@ export default async function ProfileDetailPage({
       redirect(`/profiles/${profileId}`);
     }
 
-    await deletePhoto(p.photo_key);
+    await deleteAllPhotos(profileId, p.photo_key);
     await execute(
       `UPDATE profile SET status='DELETED', deleted_at=UTC_TIMESTAMP(),
               photo_key=NULL, claim_token=NULL, claim_token_expires_at=NULL
@@ -210,7 +220,7 @@ export default async function ProfileDetailPage({
     ] as [string, string | null][]
   ).filter((d): d is [string, string] => Boolean(d[1]));
 
-  const photo = photoUrl(profile.photo_key);
+  const photos = (await photoKeysOf(profileId, profile.photo_key)).map((k) => photoUrl(k)!);
   const age = ageOf(profile.birth_year);
   const paused = profile.status === 'PAUSED';
 
@@ -242,13 +252,8 @@ export default async function ProfileDetailPage({
           </div>
         )}
 
-        {photo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photo}
-            alt=""
-            className="mx-6 h-60 w-[calc(100%-3rem)] rounded-2xl object-cover"
-          />
+        {photos.length > 0 && (
+          <PhotoCarousel srcs={photos} className="mx-6 h-60 w-[calc(100%-3rem)] rounded-2xl" />
         )}
 
         <div className="px-6 pt-5">
