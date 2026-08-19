@@ -3,8 +3,9 @@ import { notFound, redirect } from 'next/navigation';
 import { execute, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { requireRoomAccess } from '@/lib/rooms';
-import { deletePhoto, photoUrl, PhotoError } from '@/lib/photos';
+import { deletePhoto, photoUrl, PhotoError, MAX_PHOTO_BYTES } from '@/lib/photos';
 import { MAX_PHOTOS, photoKeysOf, savePhotos, setExtraPhotos } from '@/lib/profilePhotos';
+import PhotoFields from '@/components/PhotoFields';
 import AppBar from '@/components/AppBar';
 import ProfileExtraFields from '@/components/ProfileExtraFields';
 import { REGIONS, parseExtras } from '@/lib/profileFields';
@@ -262,47 +263,11 @@ export default async function EditProfilePage({
             </div>
           )}
 
-          <div>
-            <span className="block text-sm font-medium">
-              사진 <span className="text-ink-3">(최대 {MAX_PHOTOS}장)</span>
-            </span>
-
-            {currentPhotos.length > 0 && (
-              <ul className="mt-2 flex flex-wrap gap-3">
-                {currentPhotos.map((key, i) => (
-                  <li key={key}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={photoUrl(key)!}
-                      alt=""
-                      className="h-20 w-20 rounded-xl object-cover"
-                    />
-                    <label className="text-ink-2 mt-1.5 flex items-center gap-1.5 text-xs">
-                      <input
-                        type="checkbox"
-                        name="remove_photo"
-                        value={key}
-                        className="accent-brand"
-                      />
-                      {i === 0 ? '대표 지우기' : '지우기'}
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <input
-              id="photos"
-              name="photos"
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/webp"
-              className="text-ink-2 file:bg-haze mt-3 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-sm"
-            />
-            <p className="text-ink-3 mt-1 text-xs">
-              새로 올린 사진은 뒤에 붙어요. 남은 사진 중 첫 장이 대표 사진이 돼요.
-            </p>
-          </div>
+          <PhotoFields
+            current={currentPhotos.map((key) => ({ key, url: photoUrl(key)! }))}
+            max={MAX_PHOTOS}
+            maxBytes={MAX_PHOTO_BYTES}
+          />
 
           <ProfileExtraFields defaults={profile} open />
 

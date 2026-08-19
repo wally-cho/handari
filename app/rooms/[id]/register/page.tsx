@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation';
 import { execute, queryOne } from '@/lib/db';
 import { requireUser } from '@/lib/session';
 import { requireRoomAccess, unlockRoom } from '@/lib/rooms';
-import { PhotoError } from '@/lib/photos';
+import { PhotoError, MAX_PHOTO_BYTES } from '@/lib/photos';
 import { MAX_PHOTOS, savePhotos, setExtraPhotos } from '@/lib/profilePhotos';
+import PhotoFields from '@/components/PhotoFields';
 import { newToken, linkExpiry } from '@/lib/tokens';
 import AppBar from '@/components/AppBar';
 import ProfileExtraFields from '@/components/ProfileExtraFields';
@@ -319,22 +320,7 @@ export default async function RegisterPage({
             </div>
           )}
 
-          <div>
-            <label htmlFor="photos" className="block text-sm font-medium">
-              사진 <span className="text-ink-3">(선택, {MAX_PHOTOS}장까지, 장당 2MB)</span>
-            </label>
-            <input
-              id="photos"
-              name="photos"
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/webp"
-              className="text-ink-2 file:bg-haze mt-2 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:text-sm"
-            />
-            <p className="text-ink-3 mt-1 text-xs">
-              고른 순서대로 보여요. 첫 장이 대표 사진이에요.
-            </p>
-          </div>
+          <PhotoFields max={MAX_PHOTOS} maxBytes={MAX_PHOTO_BYTES} />
 
           <ProfileExtraFields />
 
